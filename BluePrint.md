@@ -461,7 +461,7 @@ For each micro task:
 9. Deployment or sandbox run
 10. Knowledge graph update
 
-Autonomy level influences steps 6 to 9.
+All transitions must log events.
 
 All transitions must emit log events. 
 
