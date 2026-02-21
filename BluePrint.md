@@ -1,14 +1,33 @@
-# COGNITIVE OPERATING SYSTEM FOR AGENTIC SWARMS
+# COGNITIVE OPERATING SYSTEM
 
-## Foundational Blueprint v1.0
+## Foundational Blueprint v2.0
+
+### Single Orchestrator Constitutional Architecture
 
 This document is normative. Engineers and AI agents must treat it as specification, not inspiration.
+
+This document defines:
+
+* System identity
+* Constitutional invariants
+* Execution model
+* Governance enforcement
+* Orchestrator model
+* Agent lifecycle
+* Compliance rules
+* UX model
+* Metrics
+* Failure handling
+* Knowledge governance
+* Minimum release criteria
+
+Any deviation requires formal revision control.
 
 ---
 
 # 1. SYSTEM IDENTITY
 
-This system is a **Cognitive Operating System for Agentic Swarms**.
+This system is a **Cognitive Operating System driven by a Single Programmable Orchestrator**.
 
 It combines:
 
@@ -17,9 +36,25 @@ It combines:
 * Adjustable autonomy
 * Full temporal traceability
 * Enterprise governance enforcement
+* Research sandbox capability
+* Policy-bound runtime agent generation
 
 The human role is Architect and Supervisor.
-AI agents are distributed executors within controlled boundaries.
+
+The system contains only one persistent cognitive intelligence:
+
+## Creator-Orchestrator Agent (COA)
+
+All other agents are:
+
+* Dynamically generated
+* Policy-bound
+* Ephemeral
+* Destroyed after task completion
+
+No static multi-agent swarm is shipped.
+
+The COA is programmable but constitutionally constrained.
 
 ---
 
@@ -35,6 +70,9 @@ AI agents are distributed executors within controlled boundaries.
 8. All agent reasoning must be inspectable.
 9. Escalation thresholds must be enforced automatically.
 10. The system must remain operable under partial failure.
+11. Only the COA may instantiate runtime agents.
+12. Runtime agents must be ephemeral and policy-bound.
+13. Constitutional invariants are immutable and cannot be modified by COA.
 
 If any feature violates these, it is invalid.
 
@@ -42,84 +80,171 @@ If any feature violates these, it is invalid.
 
 # 3. SYSTEM LAYERS
 
-## 3.1 Layer 1: Execution Engine
+---
+
+## 3.1 Constitutional Enforcement Layer (Immutable)
+
+This layer sits beneath the COA.
+
+The following are immutable and cannot be modified by COA:
+
+* Compliance engine
+* Policy validation logic
+* Log hash-chain integrity
+* Autonomy ceiling enforcement
+* DAG integrity enforcement
+* Resource governance caps
+* Security enforcement primitives
+
+COA cannot bypass this layer.
+
+---
+
+## 3.2 Layer 1: Execution Engine
 
 Purpose: Deterministic production backbone.
 
-Components:
+---
+
+### Meta Layer: Creator-Orchestrator Agent (COA)
+
+The COA is the only persistent cognitive authority.
+
+### Responsibilities
+
+* Parse user intent
+* Decompose into DAG micro-task graph
+* Generate or select runtime agent templates
+* Compose directive bundles dynamically
+* Allocate autonomy levels per node
+* Instantiate isolated execution containers
+* Monitor compliance engine
+* Adjust autonomy downward when required
+* Escalate to human when required
+* Dissolve runtime agents after task completion
+* Update knowledge graph within policy boundaries
+
+### Constraints
+
+COA cannot:
+
+* Modify compliance engine
+* Modify constitutional invariants
+* Modify hash-chain logic
+* Elevate autonomy beyond policy ceilings
+* Bypass resource caps
+* Inject undeclared dependencies
+* Write verified knowledge without validation
+
+COA must submit all actions to compliance validation.
+
+---
 
 ### A. Modular Kanban with TDD Loops
 
 All projects are decomposed into atomic micro tasks.
 
-* Each micro task contains:
-  * Input specification
-  * Acceptance criteria
-  * Neighbor interface constraints
-* Agents load only:
-  * Task context
-  * Neighbor interface contracts
-* Every task must:
-  * Generate tests first
-  * Implement code
-  * Pass tests before merge
+Each micro task contains:
 
-* Context Isolation Contract (Mandatory)
-  - Every micro task executes inside an isolated execution container.
-  - Container memory must be cleared after task completion.
-  - No hidden shared memory between nodes is permitted.
-  - Agents may access only:
-    - Task specification
-    - Explicit neighbor interface schemas
-    - Approved stack dependencies
-  - Knowledge Graph access:
-    - Read-only during normal execution
-    - Write access permitted only inside Research Sandbox
-  - Maximum context window per micro task must be explicitly configured.
-  - Cross-task state leakage is a critical violation.
-  - Violation automatically triggers escalation and node freeze.
+* Input specification
+* Acceptance criteria
+* Neighbor interface constraints
+
+Every task must:
+
+* Generate tests first
+* Implement code
+* Pass tests before merge
+
+---
+
+### Context Isolation Contract (Mandatory)
+
+Every micro task executes inside an isolated execution container.
+
+* Container memory must be cleared after completion.
+* No hidden shared memory between nodes.
+* Agents may access only:
+
+  * Task specification
+  * Explicit neighbor interface schemas
+  * Approved stack dependencies
+  * Read-only verified knowledge
+
+Knowledge Graph access:
+
+* Read-only during execution
+* Write permitted only in Research Sandbox
+
+Maximum context window per task must be explicitly configured.
+
+Cross-task state leakage:
+
+* Critical violation
+* Triggers escalation
+* Node freeze enforced
 
 This contract overrides convenience optimizations.
 
+---
+
 ### B. Neural Graph
 
-Instead of a file tree, the UX displays the Software as a directed network graph:
+The UX displays software as a directed network graph.
 
-* Node: module, agent group, or task container
-* Edge: dependency or API/data flow
-* Node states: 
+Nodes:
 
-  * Green: stable
-  * Red: failing tests
-  * Yellow: building
-  * Purple: escalation required
-* Nodes pulse during active execution.
-* Interaction: To debug "Payment", the user clicks the Payment node, zooming in to see the specific agents working inside it. This solves "ease of management" by providing a high-level health map.
+* Module
+* Task container
+* Agent group
+
+Edges:
+
+* Dependency
+* API flow
+* Data flow
+
+Node states:
+
+* Green: stable
+* Red: failing tests
+* Yellow: building
+* Purple: escalation required
+
+Nodes pulse during active execution.
 
 Graph Consistency Contract:
-  - Graph must remain a Directed Acyclic Graph (DAG) for production branches. Renovator temporary cycles must remain sandboxed and cannot deploy until cycle-free.
-  - Cycles allowed only in Research Sandbox.
-  - Edge modification requires governance log entry.
-  - Node deletion is prohibited. 
-  - Node deactivation must preserve historical trace.
+
+* Production branches must remain DAG.
+* Cycles allowed only in Research Sandbox.
+* Edge modification requires governance log entry.
+* Node deletion prohibited.
+* Node deactivation must preserve historical trace.
+
+---
 
 ### C. Stack Selector (Vending Machine Model)
 
-Instead of asking the AI to "pick a stack," the UX presents a **Stack Selector**.
+Two modes:
 
-1. Standard: predefined OSS stack templates. e.g. User selects "Standard Web App" -> AI auto-selects proven OSS (React, Node, Postgres etc.).
-2. Custom: User selects "Custom" and uploads/selects their proprietary libraries (from same or other projects/codebase). The AI ingest the docs and creates "Custom Agents" that specialize in those packages.
+1. Standard OSS templates;  e.g. User selects "Standard Web App" -> AI auto-selects proven OSS (React, Node, Postgres etc.).
+2. Custom proprietary ingestion; e.g. User selects "Custom" and uploads/selects their proprietary libraries (from same or other projects/codebase). The AI ingest the docs and creates "Custom Agents" that specialize in those packages.
 
-Stack selection locks dependency boundaries at project start unless explicitly versioned.
+Custom ingestion must:
+
+* Generate dependency manifest
+* Validate license compliance
+* Generate specialized runtime agent schema
+
+Stack selection locks dependency boundaries per branch.
 
 Stack Boundary Enforcement:
-   - Stack version must be immutable per project branch. 
-   - Dependency changes require new branch creation. 
-   - Custom ingestion must: 
-     - Generate dependency manifest 
-     - Validate license compliance 
-     - Generate specialized agent schema 
-   - Unauthorized runtime dependency injection is prohibited.
+
+* Stack version immutable per branch
+* Dependency change requires new branch
+* Unauthorized runtime injection prohibited
+
+---
 
 ### D. Management & Debugging: "Black Box Recorder"
 
@@ -134,20 +259,17 @@ All agent actions must log:
 * Code diffs
 * Test outputs
 * Stack versions
-* Autonomy level at execution time
+* Autonomy level
+* Directive state
 
-No silent operations permitted.
+Logs must be:
 
-Log Integrity Rules:
-  - Logs must be append-only. 
-  - Each log entry must include: 
-    - Timestamp 
-    - Node ID 
-    - Autonomy Level 
-    - Directive State 
-    - Stack Version 
-  - Logs must support hash-chain verification. 
-  - Log tampering must invalidate deployment eligibility.
+* Append-only
+* Hash-chain verifiable
+
+Log tampering invalidates deployment eligibility.
+
+---
 
 ### E. Diff Stream
 
@@ -157,50 +279,59 @@ Live stream of:
 * Config changes
 * Test updates
 
-Users can pause, inspect, or rewind.
-
-### F. Beyond Software: "The Research Sandbox"
-
-To function as a research platform:
-*   **Hypothesis Input:** User inputs: "Prove that X algorithm is faster than Y."
-*   **The Sandbox:** The UX spins up a **Jupyter Notebook View** (or similar).
-*   **Output:** Agents write the code, run the benchmarks, generate the charts, and draft the LaTeX paper.
-*   **Knowledge Graph:** The UX extracts key findings and adds them to a persistent "Knowledge Base" for the organization, visually linking concepts like a mind map.
-
-Separate isolated compute environment:
-
-* Jupyter-style execution view
-* Agents generate experiments, benchmarks, visualizations
-* Outputs stored in organizational Knowledge Graph
-* Knowledge nodes persist beyond project lifecycle
+Pause, inspect, rewind supported.
 
 ---
 
-## 3.2 Layer 2: Cognitive Orchestration
+### F. Research Sandbox
 
-Purpose: Spatial visibility and behavior control.
+Separate isolated compute environment.
 
-### A. Living Spatial Canvas
+Supports:
 
-The interface is an infinite, topological map of your project. At a macro level, you see high-level workflows (e.g., "Architecture Design" or "Commercialization Research"). Zoom in, and the nodes expand to reveal individual agents actively debating logic, mapping data schemas, or writing code in real-time.
+* Hypothesis input: 
+* Jupyter-style execution
+* Benchmark generation
+* Chart generation
+* Paper drafting
+
+Knowledge Graph integration:
+
+* Extract findings
+* Persist with provenance
+* Link concepts visually
+
+Sandbox permits knowledge write operations.
+
+---
+
+## 3.3 Layer 2: Cognitive Orchestration (Living Spatial Canvas)
+
+---
+
+### Living Spatial Canvas
+
+The interface is an infinite, zoomable topological map of the project. At a macro level, one sees high-level workflows (e.g., "Architecture Design" or "Commercialization Research"). Zoom in, and the nodes expand to reveal individual agents actively debating logic, mapping data schemas, or writing code in real-time.
 
 Zoom levels:
 
 1. Macro: workflows and system clusters
 2. Meso: modules and pipelines
-3. Micro: agent reasoning threads
+3. Micro: reasoning threads
 
 Graph state must synchronize in real time with execution engine.
 
-### B. Drag and Drop Directive Blocks
+---
+
+### Drag and Drop Directive Blocks
 
 Users control the outcomes via context blocks rather than typing prompts. Need a fast proof-of-concept? Drag a "Speed/Prototype" block onto the swarm. Shifting to production? Drop a "Strict TDD & Security" block onto them, and watch the swarm immediately reconfigure its behavior.
 
 Directives are behavioral modifiers applied to:
 
-* Entire project
-* Module cluster
-* Single node
+* Project
+* Cluster
+* Node
 
 Examples:
 
@@ -216,15 +347,18 @@ Directives modify:
 * Merge gating rules
 * Agent debate length
 * Security scan depth
-* Documentation generation requirements
+* Documentation requirements
 
-#### Directive Precedence Model
+---
 
-If directives conflict, resolution order is:
-1. Node-level directive
-2. Cluster-level directive
-3. Project-level directive
-4. Mode preset directive
+### Directive Precedence Model
+
+Resolution order:
+
+1. Node
+2. Cluster
+3. Project
+4. Mode preset
 
 If conflict remains:
    * Restrictive directive dominates permissive directive.
@@ -235,218 +369,240 @@ All directive changes must:
   * Generate governance log
   * Trigger re-evaluation of active tasks
 
-### C. Dial of Autonomy
+---
+
+### Dial of Autonomy
 
 Every task node features a simple slider (Level 0 to Level 5). Set it low for strict Human-in-the-Loop (HITL) where agents pause for your approval on every major decision. Push it to max, and the swarm autonomously researches, codes, tests, and self-corrects in the background.
 
-Defined levels:
-   - 0: Full HITL. Approval required before any code generation.
-   - 1: Approval required before merge.
-   - 2: Auto code, human merge approval.
-   - 3: Auto merge within sandbox.
-   - 4: Auto merge and test deploy.
-   - 5: Full autonomous research, code, test, deploy within defined boundary.
+Levels:
 
-Level above 3 requires organization-level policy permission.
+0: Full HITL
+1: Approval before merge
+2: Auto code, human merge
+3: Auto merge in sandbox
+4: Auto merge + test deploy
+5: Full autonomous within boundary
 
-#### Autonomy Escalation and De-escalation Rules
+Level >3 requires:
 
-1. Autonomy cannot auto-increase without human approval.
-2. After:
-   * 3 consecutive test failures
-   * 1 security violation
-   * 1 autonomy policy violation
+* Organization policy token
+* Multi-factor human approval
 
-   autonomy automatically reduces by 1 level.
-3. Autonomy level above 3 requires:
-   * Organization policy token
-   * Multi-factor human approval
-4. Autonomy reductions are automatic.
-5. Autonomy increases are manual.
-
-
-### D. Time Lapse Scrubber
-
-A global timeline slider at the bottom of the screen (like a video editor). If a build fails or a research hypothesis goes off track, scrub backward to watch the exact moment the agents' logic or architectural choices diverged, making debugging intuitive and visual.
-
-Allows:
-
-* Scrubbing backward to any state
-* Visual replay of topology changes
-* Inspection of autonomy levels at any timestamp
-* Comparison of diff states
-
-Time travel must not alter logs.
-Reverting creates a new branch state.
-System must support timeline replay for minimum 10,000 events without UI degradation.
-
-#### Temporal Integrity Rules
-
-1. Scrubbing does not mutate history.
-2. Revert operation creates new branch ID.
-3. All branches must preserve original lineage.
-4. Parallel branches cannot overwrite each other.
-5. Time comparison must allow diff visualization at:
-   + Code level
-   + Directive level
-   + Autonomy level
+Autonomy logged per action.
 
 ---
 
-## 3.3 Layer 3: Governance and Safety Fabric
+### Autonomy Escalation Rules
 
-Purpose: Controlled scaling of autonomy.
+After:
 
-Components:
+* 3 test failures
+* 1 security violation
+* 1 autonomy violation
 
-1. Escalation Rules
+Autonomy reduces by 1.
 
-   * Test failure retries capped at 3.
-   * After 3 failures, node turns Purple.
-   * Human intervention required.
+Autonomy cannot auto-increase.
 
-2. Merge Authority Matrix
+---
 
-   * Autonomy level determines merge capability.
-   * Production branch merges require policy compliance validation.
-   * Organization policy must be defined in immutable policy registry bound to branch.
+### Time Lapse Scrubber
 
-3. Security Gates
+A global timeline slider at the bottom of the screen (like a video editor). If a build fails or a research hypothesis goes off track, scrub backward to watch the exact moment the agents' logic or architectural choices diverged, making debugging intuitive and visual.
 
-   * Static analysis mandatory in Factory mode
-   * Dependency scanning enforced.
-   * `Factory` mode enforces full stack scanning.
-   * `Sketchpad` mode may reduce scan depth but does not disable secrets detection.
-   * Security enforcement must include:
-     * Static code analysis
-     * Dependency vulnerability scanning
-     * License compliance check
-     * Secrets detection
-     * API contract validation
+Supports:
 
-4. Audit Integrity
+* Scrubbing backward
+* Visual replay
+* Autonomy inspection
+* Directive comparison
+* Code diff comparison
 
-   * Logs are immutable.
-   * Hash chain validation required for enterprise mode.
+Scrubbing does not mutate history.
 
+Revert creates new branch.
+
+Must support minimum 10,000 event replay, with sub-second latency.
+---
+
+## 3.4 Layer 3: Governance and Safety Fabric
+
+---
+
+### Escalation Rules
+
+* Retry capped at 3
+* After 3 failures, node turnsPurple
+* Human intervention required
+
+---
+
+### Merge Authority Matrix
+
+* Autonomy determines merge capability
+* Production merges require policy validation
+* Organization policy bound immutably to branch
+
+---
+
+### Security Gates
+
+Includes:
+
+* Static code analysis
+* Dependency scanning
+* License compliance
+* Secrets detection
+* API contract validation
+
+Sketchpad may reduce scan depth but not disable secrets detection.
+
+---
 
 ### Execution Scheduling Policy
 
-1. Nodes execute in parallel if:
-   * No direct dependency edge exists
-   * Shared dependency locks are free
-2. Scheduler must enforce:
-   * DAG execution ordering
-   * Lock acquisition for shared dependencies
-3. If two nodes attempt modification of same dependency:
-   * First acquires lock
-   * Second enters wait state
-4. Deadlock detection required.
-5. Deadlock resolution escalates to human.
+Parallel execution allowed when:
 
+* No dependency conflict
+* Locks free
+
+Must enforce:
+
+* DAG ordering
+* Lock acquisition
+
+Deadlock detection required.
+
+Deadlock escalation to human required.
+
+---
 
 ### Resource Governance
 
-1. Each node must have:
-   * CPU time limit
-   * Memory limit
-   * Token usage limit
-   * Max reasoning iteration limit
-2. Infinite reasoning detection:
-   * If internal loop exceeds configured iteration cap
-   * Node auto-pauses
-   * Escalation triggered
-3. Cost budget must be configurable per project.
-4. Exceeding budget auto-freezes high autonomy nodes.
+Each node must define:
+
+* CPU time limit
+* Memory limit
+* Token limit
+* Iteration cap
+
+Infinite reasoning detection:
+
+* Exceed iteration cap
+* Auto-pause
+* Escalate
+
+Cost budget configurable per project.
+
+Budget breach freezes high autonomy nodes.
 
 ---
 
 # 4. SYSTEM PRIMITIVES
 
-All features must reduce to these primitives.
+1. Node
+2. Edge
+3. Directive
+4. Autonomy State
+5. Time State
+6. Meta-Agent (COA)
 
-1. Node: Executable unit or container.
-2. Edge: Dependency or communication path.
-3. Directive: Behavioral modifier.
-4. Autonomy State: Node-level execution authority.
-5. Time State: Versioned topology snapshot.
+All features must map to these.
 
-No additional conceptual abstractions allowed without mapping to these.
+---
 
-## Agent Model Specification
+# 5. AGENT MODEL (Runtime Agents)
 
-An Agent must contain:
+Runtime agents are ephemeral constructs instantiated by COA.
+
+Each agent must define:
 
 1. Role Definition
-   * e.g., Test Generator, Refactorer, Security Auditor
 2. Capability Scope
-   * Allowed operations
 3. Memory Boundary
-   * Max context size
 4. Execution Contract
-   * Input format
-   * Output schema
 5. Logging Requirement
-   * Mandatory reasoning trace
 6. Autonomy Compliance Hook
-   * Must check autonomy level before action
 
-Agents may call other agents only via declared interfaces.
+Agents:
 
-Unbounded agent recursion is prohibited.
+* Cannot self-elevate autonomy
+* Cannot persist memory outside container
+* Cannot instantiate other agents directly
+* Must pass schema validation
+* Must pass policy validation
+* Must register in execution graph
+* Must be destroyed after lifecycle completion
 
----
-
-# 5. MODES (PRESET DIRECTIVE CLUSTERS)
-
-Mode A: `Sketchpad` (RAD/Prototype)
-
-Fast iteration with Limited security scanning;
-  *   *Behavior:* High speed, low quality threshold. Agents ignore comprehensive tests and documentation.
-  *   *UX:* Minimal UI. Just a chat box and a preview window. "Build me a landing page" -> Result in 30 seconds.
-
-Mode B: `Factory` (Industry Grade)
-
-Mandatory security scans with Deployment pipeline visualization;
-  *   *Behavior:* Strict TDD. Agents cannot merge code without 100% test coverage and security scans. Coverage must include line and branch coverage; mutation coverage optional but configurable.
-  *   *UX:* Shows a "Pipeline View." Users see gates: *Code Generated -> Security Review -> QA Passed -> Deployed.*
-
-Mode C: `Multiverse` (R&D/Compare)
-
-Parallel agent swarms with Cross merge drag capability;
-  *   *Behavior:* The Swarm splits. E.g. Agent Group A builds using React, while Agent Group B builds using Svelte.
-  *   *UX:* **Split Screen Diff View.** The user sees two versions of the app evolving simultaneously and can drag features from one version 
-  *   *Execution Rules*:
-       1. Each branch runs isolated autonomy configuration.
-       2. Knowledge Graph is shared read-only.
-       3. Write operations to knowledge graph require branch labeling.
-       4. Feature drag between branches:
-          * Creates patch artifact
-          * Requires conflict resolution validation
-       5. Final merge requires:
-          * Cross-branch test validation
-          * Directive reconciliation
-          * Governance approval if autonomy > 2
-
-
-Mode D: `Renovator` (Refactoring)
-
-Incremental rewrite with Live system continuity guarantee;
-  *   *Behavior:* Agents read existing code, build a dependency graph, and rewrite modules one by one while keeping the system running.
-  *   *UX:* "Heatmap Overlay." Shows which files are spaghetti code (high complexity) and tracks real-time simplification progress.
-  *   *Live System Continuity Guarantee:* Renovator mode must:
-       1. Maintain compatibility adapter layer.
-       2. Route production traffic through stable adapter.
-       3. Allow incremental module replacement.
-       4. Prevent downtime during dependency rewrite.
-
-
-Modes are composed of Directive bundles.
-Switching modes updates directives, not architecture.
+Unbounded recursion prohibited.
 
 ---
 
-# 6. STATE FLOW CONTRACT
+# 6. MODES (Directive Bundles)
+
+Modes are directive bundles. Switching modes updates directives, not architecture.
+
+COA may synthesize mode composition dynamically.
+
+---
+
+## Mode A: Sketchpad
+
+High speed, reduced coverage, minimal UI.
+
+---
+
+## Mode B: Factory
+
+Strict TDD. 100 percent test coverage required.
+
+Coverage includes:
+
+* Line coverage
+* Branch coverage
+* Mutation coverage optional
+
+Pipeline view:
+
+Code → Security → QA → Deploy.
+
+---
+
+## Mode C: Multiverse
+
+Parallel branches.
+
+Rules:
+
+1. Branch autonomy isolated
+2. Knowledge graph shared read-only
+3. Writes require branch labeling
+4. Feature drag creates patch artifact
+5. Final merge requires:
+
+   * Cross-branch test validation
+   * Directive reconciliation
+   * Governance approval if autonomy >2
+
+---
+
+## Mode D: Renovator
+
+Incremental rewrite with Live system continuity .
+
+Must:
+
+1. Maintain compatibility adapter
+2. Route traffic through adapter
+3. Replace modules incrementally
+4. Prevent downtime
+
+Heatmap overlay required.
+
+---
+
+# 7. STATE FLOW CONTRACT
 
 For each micro task:
 
@@ -461,15 +617,17 @@ For each micro task:
 9. Deployment or sandbox run
 10. Knowledge graph update
 
+Autonomy level influences steps 6 to 9. 
+
 All transitions must log events.
 
-All transitions must emit log events. 
+Production branches may write metadata only.
 
-Production branches may write only metadata links; verified knowledge requires Sandbox validation.
+Verified knowledge requires sandbox validation.
 
 ---
 
-# 7. FAILURE AND RECOVERY MODEL
+# 8. FAILURE AND RECOVERY MODEL
 
 Failure types:
 
@@ -479,34 +637,44 @@ Failure types:
 * Infinite reasoning loop
 * Autonomy violation
 
-Recovery rules:
+Retry limit: 3.
 
-* Automatic retry limit: 3
-* Post limit: escalate to human
-* Time scrub available for analysis
-* Revert generates new branch state
+Post limit: escalate to human.
 
-System must never auto-delete historical states.
+Revert generates new branch.
 
----
-
-# 8. NON GOALS
-
-This system is not:
-
-* A chatbot UI
-* A generic IDE replacement
-* A no-code builder
-* A free form brainstorming board
-* A visualization toy
-
-It is a structured agent orchestration OS.
+History cannot be deleted.
 
 ---
 
-# 9. METRICS
+# 9. KNOWLEDGE GRAPH GOVERNANCE
 
-The system must track:
+Knowledge nodes must contain:
+
+* Source branch
+* Timestamp
+* Validation status
+* Authoring agent
+
+Validation states:
+
+* Draft
+* Verified
+* Deprecated
+
+Only Verified knowledge influences production.
+
+Rollback preserves lineage.
+
+Snapshots required.
+
+Cross-project sharing requires approval.
+
+---
+
+# 10. METRICS
+
+Must track:
 
 * Mean time to safe deployment
 * Test coverage ratio
@@ -523,53 +691,42 @@ The system must track:
 * Policy override attempts
 * Resource cap breaches
 
-Metrics must be immutable and auditable. Must be accessible via governance dashboard.
+Metrics must be immutable and auditable.
 
 ---
 
-# 10. MINIMUM IMPLEMENTATION REQUIREMENTS
+# 11. MINIMUM IMPLEMENTATION REQUIREMENTS
 
-To qualify as v1 release, the system must include:
+v1 release must include:
 
-* Neural Graph with live state updates
+* Neural Graph with live updates
 * Micro task isolation engine
-* TDD enforced pipeline
-* Autonomy dial per node
-* Directive block system
+* TDD enforcement
+* Autonomy dial
+* Directive system
 * Time scrubber
-* Immutable black box logging
+* Immutable logging
 * Escalation enforcement
+* COA orchestration
+* Compliance enforcement layer
 
-Partial implementations are prototypes, not releases.
-
-# 11. KNOWLEDGE GRAPH GOVERNANCE
-
-1. Knowledge nodes must contain:
-   * Source branch
-   * Timestamp
-   * Validation status
-   * Authoring agent
-2. Knowledge validation states:
-   * Draft
-   * Verified
-   * Deprecated
-3. Only Verified knowledge can influence production agents.
-4. Knowledge rollback must preserve historical lineage.
-5. Knowledge graph must support version snapshots.
-6. Cross-project knowledge sharing requires explicit approval.
+Partial implementations are prototypes.
 
 ---
 
 # END STATE
 
-When implemented correctly, the system behaves as:
+When implemented correctly, the system is:
 
-* Deterministic at its core
+* Deterministic
 * Spatially observable
 * Behaviorally composable
 * Autonomy adjustable
 * Temporally reversible
 * Governance enforced
+* Orchestrator driven
+* Constitutionally constrained
 
 This document defines the build boundary.
+
 Anything outside it requires formal revision control.
