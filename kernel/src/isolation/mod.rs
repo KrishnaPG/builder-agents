@@ -1,4 +1,4 @@
-use crate::api::{ExecutionError, ExecutionResult, ExecutionRuntime};
+use crate::api::{ExecutionError, ExecutionErrorKind, ExecutionResult, ExecutionRuntime, ResourceUsage};
 use crate::autonomy::CapabilityToken;
 use crate::types::{AutonomyLevel, NodeId, WorkSpec};
 use std::process::{Command, Stdio};
@@ -15,7 +15,7 @@ impl Isolation {
 impl ExecutionRuntime for Isolation {
     fn execute(
         &self,
-        _node_id: NodeId,
+        node_id: NodeId,
         token: &CapabilityToken,
         work: WorkSpec,
     ) -> Result<ExecutionResult, ExecutionError> {
@@ -23,27 +23,57 @@ impl ExecutionRuntime for Isolation {
             AutonomyLevel::L0 | AutonomyLevel::L1 | AutonomyLevel::L2 => {
                 // Thread isolation
                 let handle = thread::spawn(move || {
-                    // Execute work in thread
-                    // For now, just print payload
                     println!("Executing work in thread: {:?}", work);
+                    "Thread execution completed".to_string()
                 });
-                handle.join().map_err(|_| ExecutionError)?;
+                
+                match handle.join() {
+                    Ok(result) => Ok(ExecutionResult {
+                        success: true,
+                        node_id,
+                        output: Some(result),
+                        resource_usage: ResourceUsage::default(),
+                    }),
+                    Err(_) => Err(ExecutionError {
+                        node_id: Some(node_id),
+                        kind: ExecutionErrorKind::IsolationFailure,
+                        message: "Thread panicked".to_string(),
+                    }),
+                }
             }
             AutonomyLevel::L3 | AutonomyLevel::L4 | AutonomyLevel::L5 => {
                 // Subprocess isolation
-                // For now, spawn a simple echo command as placeholder
                 let mut cmd = Command::new("echo");
                 cmd.arg(format!("Executing work in subprocess: {:?}", work));
-                cmd.env_clear(); // Clear environment
+                cmd.env_clear();
                 cmd.stdout(Stdio::piped());
                 cmd.stdin(Stdio::piped());
                 
-                let output = cmd.output().map_err(|_| ExecutionError)?;
-                if !output.status.success() {
-                    return Err(ExecutionError);
+                match cmd.output() {
+                    Ok(output) => {
+                        if output.status.success() {
+                            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+                            Ok(ExecutionResult {
+                                success: true,
+                                node_id,
+                                output: Some(stdout),
+                                resource_usage: ResourceUsage::default(),
+                            })
+                        } else {
+                            Err(ExecutionError {
+                                node_id: Some(node_id),
+                                kind: ExecutionErrorKind::Internal,
+                                message: "Subprocess failed".to_string(),
+                            })
+                        }
+                    }
+                    Err(e) => Err(ExecutionError {
+                        node_id: Some(node_id),
+                        kind: ExecutionErrorKind::IsolationFailure,
+                        message: format!("Failed to spawn subprocess: {}", e),
+                    }),
                 }
             }
         }
-        Ok(ExecutionResult)
     }
 }

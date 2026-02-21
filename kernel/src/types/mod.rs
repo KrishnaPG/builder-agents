@@ -105,3 +105,37 @@ impl EventId {
         Self(Uuid::new_v4())
     }
 }
+
+/// Timestamp type for kernel events
+pub type Timestamp = u64;
+
+/// Current unix timestamp
+pub fn now_timestamp() -> Timestamp {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+/// Token expiration duration (in seconds)
+pub const DEFAULT_TOKEN_EXPIRY_SECS: u64 = 3600; // 1 hour
+
+/// Maximum autonomy ceiling - can be configured per deployment
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AutonomyCeiling {
+    pub max_level: AutonomyLevel,
+}
+
+impl Default for AutonomyCeiling {
+    fn default() -> Self {
+        Self {
+            max_level: AutonomyLevel::L5,
+        }
+    }
+}
+
+impl AutonomyCeiling {
+    pub fn check(&self, level: AutonomyLevel) -> bool {
+        level.as_u8() <= self.max_level.as_u8()
+    }
+}

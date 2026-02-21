@@ -23,7 +23,9 @@ fn test_token_signing_and_verification() {
         AutonomyLevel::L1, 
         caps, 
         hash, 
-        &signing_key
+        &signing_key,
+        0, // no expiration
+        "", // no operation binding
     );
     
     assert!(token.verify(&verifying_key));
@@ -49,7 +51,9 @@ fn test_token_forgery_fails() {
         AutonomyLevel::L1, 
         caps, 
         hash, 
-        &signing_key
+        &signing_key,
+        0, // no expiration
+        "", // no operation binding
     );
     
     // Tamper with data

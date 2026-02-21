@@ -1,24 +1,199 @@
-use crate::error::{KernelError, StateMachineError};
+use crate::error::{ComplianceViolation, KernelError, StateMachineError};
 use crate::types::*;
 use std::time::Duration;
 
-pub struct ValidationReport;
-pub struct TransitionReceipt;
-pub struct ExecutionResult;
-pub struct ExecutionError;
-pub struct ProposedAction;
-pub struct ComplianceReport;
-pub struct ComplianceError;
-pub struct PolicyScope;
-pub struct PolicySnapshot;
-pub struct ResourceAvailability;
-pub struct EventFilter;
-pub struct LogEntry;
-pub struct IntegrityReport;
-pub struct ScheduleToken;
-pub struct SchedulerError;
-pub struct GraphStats;
-pub struct Compatibility;
+/// Report from validating a capability token
+#[derive(Debug, Clone)]
+pub struct ValidationReport {
+    pub valid: bool,
+    pub node_id: NodeId,
+    pub autonomy_level: AutonomyLevel,
+    pub timestamp_valid: bool,
+    pub signature_valid: bool,
+    pub resource_caps_valid: bool,
+    pub reason: Option<String>,
+}
+
+/// Receipt for a successful state transition
+#[derive(Debug, Clone)]
+pub struct TransitionReceipt {
+    pub node_id: NodeId,
+    pub from_state: NodeState,
+    pub to_state: NodeState,
+    pub timestamp: u64,
+    pub token_validated: bool,
+}
+
+/// Result of executing work in a node
+#[derive(Debug, Clone)]
+pub struct ExecutionResult {
+    pub success: bool,
+    pub node_id: NodeId,
+    pub output: Option<String>,
+    pub resource_usage: ResourceUsage,
+}
+
+/// Resource usage statistics from execution
+#[derive(Debug, Clone, Default)]
+pub struct ResourceUsage {
+    pub cpu_time_ms: u64,
+    pub memory_bytes: u64,
+    pub tokens_used: u64,
+    pub iterations: u64,
+}
+
+/// Error from execution
+#[derive(Debug, Clone)]
+pub struct ExecutionError {
+    pub node_id: Option<NodeId>,
+    pub kind: ExecutionErrorKind,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionErrorKind {
+    ResourceExceeded,
+    Timeout,
+    IsolationFailure,
+    TokenInvalid,
+    Internal,
+}
+
+/// A proposed action to be validated by compliance
+#[derive(Debug, Clone)]
+pub struct ProposedAction {
+    pub action_type: ActionType,
+    pub node_id: Option<NodeId>,
+    pub graph_id: Option<GraphId>,
+    pub requested_caps: Option<ResourceCaps>,
+    pub target_state: Option<NodeState>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActionType {
+    CreateGraph,
+    CloseGraph,
+    AddNode,
+    AddEdge,
+    DeactivateNode,
+    FreezeNode,
+    IssueToken,
+    TransitionState,
+    ExecuteWork,
+}
+
+/// Report from compliance validation
+#[derive(Debug, Clone)]
+pub struct ComplianceReport {
+    pub approved: bool,
+    pub violations: Vec<ComplianceViolation>,
+    pub resource_check_passed: bool,
+    pub policy_check_passed: bool,
+    pub timestamp: u64,
+}
+
+/// Error from compliance check
+#[derive(Debug, Clone)]
+pub struct ComplianceError {
+    pub violations: Vec<ComplianceViolation>,
+    pub message: String,
+}
+
+/// Scope for policy queries
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PolicyScope {
+    Global,
+    Graph(GraphId),
+    Node(NodeId),
+}
+
+/// Snapshot of policy at a point in time
+#[derive(Debug, Clone)]
+pub struct PolicySnapshot {
+    pub max_autonomy_level: AutonomyLevel,
+    pub default_caps: ResourceCaps,
+    pub require_token_for_all_actions: bool,
+    pub timestamp: u64,
+}
+
+/// Resource availability status
+#[derive(Debug, Clone)]
+pub struct ResourceAvailability {
+    pub available: bool,
+    pub cpu_time_remaining_ms: u64,
+    pub memory_remaining_bytes: u64,
+    pub tokens_remaining: u64,
+    pub iterations_remaining: u64,
+}
+
+/// Filter for querying log events
+#[derive(Debug, Clone, Default)]
+pub struct EventFilter {
+    pub node_id: Option<NodeId>,
+    pub action: Option<String>,
+    pub since_timestamp: Option<u64>,
+    pub until_timestamp: Option<u64>,
+    pub autonomy_level: Option<AutonomyLevel>,
+}
+
+/// A single log entry
+#[derive(Debug, Clone)]
+pub struct LogEntry {
+    pub event: crate::logging::Event,
+    pub verified: bool,
+}
+
+/// Report from integrity verification
+#[derive(Debug, Clone)]
+pub struct IntegrityReport {
+    pub valid: bool,
+    pub events_checked: usize,
+    pub first_invalid_index: Option<usize>,
+    pub tamper_detected: bool,
+}
+
+/// Token representing a scheduled execution
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ScheduleToken {
+    pub node_id: NodeId,
+    pub sequence: u64,
+}
+
+/// Error from scheduler operations
+#[derive(Debug, Clone)]
+pub struct SchedulerError {
+    pub kind: SchedulerErrorKind,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SchedulerErrorKind {
+    NodeNotFound,
+    DeadlockDetected,
+    AlreadyScheduled,
+    Timeout,
+    Cancelled,
+}
+
+/// Statistics for a graph
+#[derive(Debug, Clone)]
+pub struct GraphStats {
+    pub node_count: usize,
+    pub edge_count: usize,
+    pub graph_type: GraphType,
+    pub is_closed: bool,
+    pub created_at: u64,
+}
+
+/// API compatibility enum
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Compatibility {
+    Compatible,
+    Deprecated,
+    BreakingChanges(Vec<String>),
+    Incompatible(Vec<String>),
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ApiVersion {
     pub major: u16,
     pub minor: u16,
@@ -95,16 +270,17 @@ pub trait EventLogger {
     fn verify_integrity(&self) -> Result<IntegrityReport, KernelError>;
 }
 
-pub trait Scheduler {
+#[async_trait::async_trait]
+pub trait Scheduler: Send + Sync {
     fn schedule(
         &self,
         node_id: NodeId,
         token: &crate::autonomy::CapabilityToken,
     ) -> Result<ScheduleToken, SchedulerError>;
     fn cancel(&self, schedule_token: ScheduleToken) -> Result<(), SchedulerError>;
-    fn wait_for_completion(
+    async fn wait_for_completion(
         &self,
         node_id: NodeId,
         timeout: Duration,
-    ) -> impl std::future::Future<Output = Result<ExecutionResult, SchedulerError>> + Send;
+    ) -> Result<ExecutionResult, SchedulerError>;
 }

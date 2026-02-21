@@ -1,0 +1,17 @@
+# cargo-nextest configuration
+# Run with: cargo nextest run --package cog_kernel
+
+[profile.default]
+status-level = "all"
+success-output = "final"
+failure-output = "immediate-final"
+
+[profile.verbose]
+status-level = "all"
+success-output = "immediate"
+failure-output = "immediate"
+
+[profile.ci]
+status-level = "all"
+failure-output = "immediate-final"
+junit = { path = "test-results/junit.xml" }

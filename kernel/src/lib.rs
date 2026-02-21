@@ -18,3 +18,6 @@ pub use api::*;
 pub use error::*;
 pub use handle::*;
 pub use types::*;
+
+/// Re-export test harness for external use
+pub use test_harness::{SimulatorConfig, run_simulator, TestHarness};
