@@ -1,0 +1,39 @@
+[package]
+name = "cog_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cog_kernel"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cog-kernel"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+ed25519-dalek = { version = "2", features = ["rand_core", "serde"] }
+parking_lot = "0.12"
+petgraph = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+rand = "0.8"
+
+dashmap = { version = "6", optional = true }
+smallvec = { version = "1", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1"
+
+[features]
+default = []
+perf = ["dashmap", "smallvec"]
