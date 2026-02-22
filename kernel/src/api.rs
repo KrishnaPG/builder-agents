@@ -1,5 +1,11 @@
-use crate::error::{ComplianceViolation, KernelError, StateMachineError};
-use crate::types::*;
+//! Public API Types (v2.0)
+//!
+//! This module contains the public API types for the kernel.
+//! Note: Most functionality is now accessed through the `prelude` module
+//! which provides the v2.0 two-phase architecture types.
+
+use crate::types::{AutonomyLevel, GraphId, GraphType, NodeId, NodeSpec, NodeState, ResourceCaps};
+use crate::error::StateMachineError;
 use std::time::Duration;
 
 /// Report from validating a capability token
@@ -42,88 +48,21 @@ pub struct ResourceUsage {
     pub iterations: u64,
 }
 
-/// Error from execution
+/// Error from execution (legacy API - use ExecutionError from error module instead)
 #[derive(Debug, Clone)]
-pub struct ExecutionError {
+pub struct ApiExecutionError {
     pub node_id: Option<NodeId>,
-    pub kind: ExecutionErrorKind,
+    pub kind: ApiExecutionErrorKind,
     pub message: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExecutionErrorKind {
+pub enum ApiExecutionErrorKind {
     ResourceExceeded,
     Timeout,
     IsolationFailure,
     TokenInvalid,
     Internal,
-}
-
-/// A proposed action to be validated by compliance
-#[derive(Debug, Clone)]
-pub struct ProposedAction {
-    pub action_type: ActionType,
-    pub node_id: Option<NodeId>,
-    pub graph_id: Option<GraphId>,
-    pub requested_caps: Option<ResourceCaps>,
-    pub target_state: Option<NodeState>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ActionType {
-    CreateGraph,
-    CloseGraph,
-    AddNode,
-    AddEdge,
-    DeactivateNode,
-    FreezeNode,
-    IssueToken,
-    TransitionState,
-    ExecuteWork,
-}
-
-/// Report from compliance validation
-#[derive(Debug, Clone)]
-pub struct ComplianceReport {
-    pub approved: bool,
-    pub violations: Vec<ComplianceViolation>,
-    pub resource_check_passed: bool,
-    pub policy_check_passed: bool,
-    pub timestamp: u64,
-}
-
-/// Error from compliance check
-#[derive(Debug, Clone)]
-pub struct ComplianceError {
-    pub violations: Vec<ComplianceViolation>,
-    pub message: String,
-}
-
-/// Scope for policy queries
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PolicyScope {
-    Global,
-    Graph(GraphId),
-    Node(NodeId),
-}
-
-/// Snapshot of policy at a point in time
-#[derive(Debug, Clone)]
-pub struct PolicySnapshot {
-    pub max_autonomy_level: AutonomyLevel,
-    pub default_caps: ResourceCaps,
-    pub require_token_for_all_actions: bool,
-    pub timestamp: u64,
-}
-
-/// Resource availability status
-#[derive(Debug, Clone)]
-pub struct ResourceAvailability {
-    pub available: bool,
-    pub cpu_time_remaining_ms: u64,
-    pub memory_remaining_bytes: u64,
-    pub tokens_remaining: u64,
-    pub iterations_remaining: u64,
 }
 
 /// Filter for querying log events
@@ -193,6 +132,7 @@ pub enum Compatibility {
     BreakingChanges(Vec<String>),
     Incompatible(Vec<String>),
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ApiVersion {
     pub major: u16,
@@ -201,42 +141,46 @@ pub struct ApiVersion {
 }
 
 pub const KERNEL_API_VERSION: ApiVersion = ApiVersion {
-    major: 1,
+    major: 2,
     minor: 0,
     patch: 0,
 };
 
+/// Graph management trait (legacy - use GraphBuilder directly)
 pub trait GraphManager {
-    fn create_graph(&self, graph_type: GraphType) -> Result<GraphId, KernelError>;
-    fn close_graph(&self, graph_id: GraphId) -> Result<(), KernelError>;
-    fn graph_stats(&self, graph_id: GraphId) -> Result<GraphStats, KernelError>;
+    fn create_graph(&self, graph_type: GraphType) -> Result<GraphId, crate::error::KernelError>;
+    fn close_graph(&self, graph_id: GraphId) -> Result<(), crate::error::KernelError>;
+    fn graph_stats(&self, graph_id: GraphId) -> Result<GraphStats, crate::error::KernelError>;
 }
 
+/// Node operations trait (legacy - use GraphBuilder directly)
 pub trait NodeOperations {
-    fn add_node(&self, graph_id: GraphId, spec: NodeSpec) -> Result<NodeId, KernelError>;
-    fn add_edge(&self, graph_id: GraphId, from: NodeId, to: NodeId) -> Result<(), KernelError>;
-    fn deactivate_node(&self, node_id: NodeId) -> Result<(), KernelError>;
-    fn freeze_node(&self, node_id: NodeId) -> Result<(), KernelError>;
+    fn add_node(&self, graph_id: GraphId, spec: NodeSpec) -> Result<NodeId, crate::error::KernelError>;
+    fn add_edge(&self, graph_id: GraphId, from: NodeId, to: NodeId) -> Result<(), crate::error::KernelError>;
+    fn deactivate_node(&self, node_id: NodeId) -> Result<(), crate::error::KernelError>;
+    fn freeze_node(&self, node_id: NodeId) -> Result<(), crate::error::KernelError>;
 }
 
+/// Autonomy management trait (legacy - handled by ConstructionValidator)
 pub trait AutonomyManager {
     fn issue_token(
         &self,
         node_id: NodeId,
         level: AutonomyLevel,
         caps: ResourceCaps,
-    ) -> Result<crate::autonomy::CapabilityToken, KernelError>;
+    ) -> Result<crate::autonomy::CapabilityToken, crate::error::KernelError>;
 
     fn downgrade_token(
         &self,
         token: &crate::autonomy::CapabilityToken,
         new_level: AutonomyLevel,
-    ) -> Result<crate::autonomy::CapabilityToken, KernelError>;
+    ) -> Result<crate::autonomy::CapabilityToken, crate::error::KernelError>;
 
     fn validate_token(&self, token: &crate::autonomy::CapabilityToken)
-        -> Result<ValidationReport, KernelError>;
+        -> Result<ValidationReport, crate::error::KernelError>;
 }
 
+/// State controller trait
 pub trait StateController {
     fn transition(
         &self,
@@ -245,31 +189,28 @@ pub trait StateController {
         token: &crate::autonomy::CapabilityToken,
     ) -> Result<TransitionReceipt, StateMachineError>;
 
-    fn current_state(&self, node_id: NodeId) -> Result<NodeState, KernelError>;
-    fn allowed_transitions(&self, node_id: NodeId) -> Result<Vec<NodeState>, KernelError>;
+    fn current_state(&self, node_id: NodeId) -> Result<NodeState, crate::error::KernelError>;
+    fn allowed_transitions(&self, node_id: NodeId) -> Result<Vec<NodeState>, crate::error::KernelError>;
 }
 
+/// Execution runtime trait (legacy - use Executor instead)
 pub trait ExecutionRuntime {
     fn execute(
         &self,
         node_id: NodeId,
         token: &crate::autonomy::CapabilityToken,
-        work: WorkSpec,
-    ) -> Result<ExecutionResult, ExecutionError>;
+        work: crate::types::WorkSpec,
+    ) -> Result<ExecutionResult, ApiExecutionError>;
 }
 
-pub trait ComplianceInterface {
-    fn validate_action(&self, action: ProposedAction) -> Result<ComplianceReport, ComplianceError>;
-    fn query_policy(&self, scope: PolicyScope) -> Result<PolicySnapshot, KernelError>;
-    fn check_resources(&self, caps: ResourceCaps) -> Result<ResourceAvailability, KernelError>;
-}
-
+/// Event logger trait
 pub trait EventLogger {
-    fn log_event(&self, event: crate::logging::Event) -> Result<EventId, crate::error::LogError>;
-    fn query_events(&self, filter: EventFilter, limit: usize) -> Result<Vec<LogEntry>, KernelError>;
-    fn verify_integrity(&self) -> Result<IntegrityReport, KernelError>;
+    fn log_event(&self, event: crate::logging::Event) -> Result<crate::types::EventId, crate::error::LogError>;
+    fn query_events(&self, filter: EventFilter, limit: usize) -> Result<Vec<LogEntry>, crate::error::KernelError>;
+    fn verify_integrity(&self) -> Result<IntegrityReport, crate::error::KernelError>;
 }
 
+/// Scheduler trait
 #[async_trait::async_trait]
 pub trait Scheduler: Send + Sync {
     fn schedule(

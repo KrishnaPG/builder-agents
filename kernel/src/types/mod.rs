@@ -139,3 +139,22 @@ impl AutonomyCeiling {
         level.as_u8() <= self.max_level.as_u8()
     }
 }
+
+/// v2.0 Types module
+pub mod v2;
+
+// Re-export commonly used v2 types
+pub use v2::{
+    ExecutionSummary,
+    ExpansionSchema,
+    ExpansionState,
+    ExpansionType,
+    IntegrityVerification,
+    NodeSpecV2,
+    SubgraphSpec,
+    SystemLimits,
+    TypeIdWrapper,
+    ValidatedGraph,
+    ValidationError,
+    ValidationToken,
+};

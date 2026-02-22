@@ -15,6 +15,9 @@ cargo build --release
 ```bash
 # Shows the complete test report with all results
 cargo test --package cog_kernel -- --nocapture
+
+# or
+cargo nextest run
 ```
 
 ### Using cargo-nextest (Recommended)

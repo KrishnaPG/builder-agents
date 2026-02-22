@@ -1,31 +1,4 @@
-# IMPLEMENTATION NOTES
-
-## 26.1 Test Organization
-
-```
-kernel/
- ├── src/
- │    └── ...
- ├── tests/
- │    ├── integration/           # Workflow tests
- │    │    ├── node_lifecycle.rs
- │    │    ├── escalation_flow.rs
- │    │    └── concurrent_ops.rs
- │    ├── property/              # Property-based tests
- │    │    ├── dag_properties.rs
- │    │    ├── state_properties.rs
- │    │    └── token_properties.rs
- │    ├── negative/              # Failure mode tests
- │    │    ├── graph_violations.rs
- │    │    ├── autonomy_violations.rs
- │    │    └── compliance_violations.rs
- │    └── common/                # Test utilities
- │         ├── mod.rs
- │         ├── generators.rs     # Test data generators
- │         └── assertions.rs     # Invariant assertions
-```
-
-## 26.2 CI/CD Integration
+# CI/CD Integration
 
 ```yaml
 # .github/workflows/kernel-certification.yml

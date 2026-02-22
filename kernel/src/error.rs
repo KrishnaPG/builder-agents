@@ -136,6 +136,7 @@ pub enum AutonomyError {
     ElevationForbidden,
     InvalidSignature,
     TokenRequired,
+    TokenBindingFailure,
 }
 
 impl fmt::Display for AutonomyError {
@@ -160,6 +161,7 @@ impl fmt::Display for ComplianceViolation {
 pub enum ResourceError {
     LimitExceeded,
     CapExceeded,
+    BoundsNotProvable,
 }
 
 impl fmt::Display for ResourceError {
@@ -205,6 +207,47 @@ impl fmt::Display for ConfigError {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InternalError(pub String);
+
+/// v2.0: Construction phase errors
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ValidationError {
+    AutonomyCeilingExceeded,
+    ResourceBoundsNotProvable,
+    SecurityPipelineIncomplete,
+    ExpansionBudgetExceeded,
+    ExpansionSchemaMismatch,
+    InvalidGraphStructure,
+    CycleDetected,
+    SelfLoop,
+}
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
+/// v2.0: Execution phase errors
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExecutionError {
+    TokenExpired,
+    TokenIntegrityFailure,
+    TokenBindingFailure,
+    IllegalStateTransition,
+    ResourceEnforcementTriggered,
+    GraphNotValidated,
+    ExpansionRequired,
+}
+
+impl fmt::Display for ExecutionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for ExecutionError {}
 
 impl fmt::Display for InternalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

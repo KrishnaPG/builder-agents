@@ -1,70 +1,119 @@
-# CERTIFICATION CRITERIA
+# CERTIFICATION CRITERIA (v2.0)
 
-The Kernel is certified when the COA Simulator meets these thresholds:
+The Kernel is certified when the COA Simulator meets these thresholds for the **v2.0 Safe-by-Construction Architecture**.
 
-## 25.1 Minimum Simulator Runs
+## 25.1 Two-Phase Certification Model
 
-| Metric                             | Requirement           |
-| ---------------------------------- | --------------------- |
-| Total Operations                   | ≥ 10,000,000          |
-| Valid Operations                   | ≥ 7,000,000           |
-| Edge Cases                         | ≥ 2,000,000           |
-| Invalid Operations (each category) | ≥ 200,000             |
-| Concurrent Operation Tests         | ≥ 1,000               |
-| Seeds Tested                       | ≥ 100 different seeds |
+v2.0 certification requires separate validation of both phases:
 
-## 25.2 Success Criteria
+### Phase 1: Construction Phase
+
+| Metric | Requirement |
+|--------|-------------|
+| Graph Validations | ≥ 1,000,000 |
+| Invalid Graphs Rejected | ≥ 100,000 (each category) |
+| Cycle Detections | ≥ 50,000 |
+| Autonomy Ceiling Violations Caught | ≥ 50,000 |
+| Resource Bound Violations Caught | ≥ 50,000 |
+| Seeds Tested | ≥ 100 different seeds |
+
+### Phase 2: Execution Phase
+
+| Metric | Requirement |
+|--------|-------------|
+| Validated Graphs Executed | ≥ 1,000,000 |
+| Token Integrity Verifications | ≥ 1,000,000 |
+| Zero Runtime Policy Violations | **0** (Critical) |
+| Resource Enforcements | ≥ 100,000 |
+
+## 25.2 Certification Criteria
 
 ```rust
 pub struct CertificationCriteria {
-		/// Zero invariant violations across all runs
-		pub max_invariant_violations: usize = 0,
-		
-		/// Zero unexpected acceptances (invalid ops that succeeded)
-		pub max_false_positives: usize = 0,
-		
-		/// Acceptable false rejection rate (valid ops rejected incorrectly)
-		pub max_false_negative_rate: f64 = 0.0001, // 0.01%
-		
-		/// All property-based tests pass
-		pub property_tests_pass: bool = true,
-		
-		/// Code coverage meets targets
-		pub coverage_meets_targets: bool = true,
-		
-		/// Mutation testing score
-		pub mutation_score: f64 >= 0.80,
-		
-		/// Determinism verified
-		pub determinism_verified: bool = true,
-		
-		/// Performance targets met
-		pub performance_targets_met: bool = true,
+    /// Phase 1: Construction success rate
+    pub construction_success_rate: f64 = 1.0, // 100%
+    
+    /// Phase 1: Invalid graph rejection rate
+    pub invalid_rejection_rate: f64 = 1.0, // 100%
+    
+    /// Phase 2: Zero runtime policy validation (CRITICAL)
+    pub runtime_policy_validation_count: usize = 0,
+    
+    /// Phase 2: Token integrity verification rate
+    pub token_integrity_verification_rate: f64 = 1.0, // 100%
+    
+    /// All property-based tests pass
+    pub property_tests_pass: bool = true,
+    
+    /// Code coverage meets targets
+    pub coverage_meets_targets: bool = true,
+    
+    /// Mutation testing score
+    pub mutation_score: f64 >= 0.80,
+    
+    /// Determinism verified
+    pub determinism_verified: bool = true,
+    
+    /// Performance targets met
+    pub performance_targets_met: bool = true,
 }
 ```
 
-## 25.3 Certification Report
+## 25.3 v2.0 Invariant Checks
+
+### Construction Invariants
+
+| Invariant | Check |
+|-----------|-------|
+| `AllGraphsValidatedBeforeExecution` | Every executed graph has a `ValidationToken` |
+| `NoRuntimePolicyValidationCalls` | Zero policy checks during execution |
+| `ValidatedGraphsAreImmutable` | `ValidatedGraph` fields are private/sealed |
+| `ConstructionRejectsInvalidGraphs` | All invalid graphs fail at `GraphBuilder::validate()` |
+
+### Execution Invariants
+
+| Invariant | Check |
+|-----------|-------|
+| `TokenIntegrityVerifiedBeforeUse` | `TokenIntegrity::verify_integrity()` called before execution |
+| `ResourceBoundsEnforced` | Container enforces pre-declared limits |
+| `ZeroPolicyQueries` | No `ComplianceInterface` calls during execution |
+
+### Expansion Invariants (if applicable)
+
+| Invariant | Check |
+|-----------|-------|
+| `ExpansionSubgraphsAreValidated` | Subgraphs pass `ExpansionSchema::validate_subgraph()` |
+| `ResourceBoundsPropagatedToExpansions` | Child subgraphs within parent budget |
+| `AutonomyCeilingPropagated` | Child nodes respect parent ceiling |
+
+## 25.4 Certification Report
 
 ```
-KERNEL CERTIFICATION REPORT
+KERNEL CERTIFICATION REPORT (v2.0)
 Generated: <timestamp>
-Kernel Version: X.Y.Z
-API Version: 1.0.0
+Kernel Version: 2.0.0
+Architecture: Safe-by-Construction
 
-=== SIMULATOR RESULTS ===
-Total Operations: 10,000,000
-Seeds Tested: 100
-Wall Clock Time: 3600s
+=== PHASE 1: CONSTRUCTION ===
+Total Validations: 1,000,000
+Invalid Graphs Rejected: 300,000 / 300,000 (100%) ✓
+  - Cycles detected: 50,000
+  - Self-loops rejected: 50,000
+  - Autonomy violations: 50,000
+  - Resource violations: 50,000
+  - Invalid structures: 100,000
 
-Outcome Distribution:
-	Valid ops accepted: 6,999,200 / 7,000,000 (99.99%)
-	Valid ops rejected: 800 (0.01%) - investigated, all resource exhaustion
-	Invalid ops rejected: 2,999,950 / 3,000,000 (99.998%)
-	Invalid ops accepted: 50 (0.002%) - CRITICAL, see Appendix A
+Construction Success Rate: 100% ✓
+Validation Time (avg): 0.5ms per graph
 
-Invariant Violations: 0
-False Positives: 0
-False Negatives: 800 (within threshold)
+=== PHASE 2: EXECUTION ===
+Total Executions: 1,000,000
+Token Integrity Checks: 1,000,000 / 1,000,000 (100%) ✓
+Runtime Policy Validations: 0 ✓ (CRITICAL)
+Resource Enforcements: 150,000
+
+Execution Success Rate: 99.95% ✓
+Execution Time (avg): 0.3ms per node
 
 === CODE COVERAGE ===
 Line Coverage: 97.3% [TARGET: 95%] ✓
@@ -73,15 +122,26 @@ Mutation Score: 87% [TARGET: 80%] ✓
 
 === PERFORMANCE ===
 10k node stress test: 1.2s [TARGET: <2s] ✓
-Avg operation latency: 0.05ms
+Avg construction latency: 0.5ms
+Avg execution latency: 0.3ms
 Memory usage (10k nodes): 45MB
 
 === INVARIANT VERIFICATION ===
-✓ Graph Integrity: All production graphs acyclic
-✓ Autonomy Enforcement: No elevation detected
-✓ State Machine: All transitions valid
-✓ Log Integrity: Hash chain unbroken
-✓ Resource Governance: No cap violations
+✓ Construction Phase:
+  ✓ AllGraphsValidatedBeforeExecution
+  ✓ NoRuntimePolicyValidationCalls
+  ✓ ValidatedGraphsAreImmutable
+  ✓ ConstructionRejectsInvalidGraphs
+
+✓ Execution Phase:
+  ✓ TokenIntegrityVerifiedBeforeUse
+  ✓ ResourceBoundsEnforced
+  ✓ ZeroPolicyQueries
+
+=== DETERMINISM ===
+✓ Same input → Same validation hash
+✓ Same validated graph → Same execution result
+✓ 100 seeds tested, all deterministic
 
 === CERTIFICATION STATUS ===
 [ ] CONDITIONAL - Issues in Appendix A must be resolved
@@ -89,15 +149,68 @@ Memory usage (10k nodes): 45MB
 [ ] REJECTED - Critical issues found
 
 === APPENDIX A: ANOMALIES ===
-50 invalid operations incorrectly accepted:
-	- 45: Token with future timestamp (validation window too wide)
-	- 5: Edge case resource caps (off-by-one in check)
-	
-Recommended Actions:
-	1. Narrow token timestamp validation window
-	2. Fix resource cap boundary check
-	3. Re-run simulator with fixes
+None detected.
+
+=== APPENDIX B: ARCHITECTURE VERIFICATION ===
+✓ Two-phase architecture implemented
+✓ GraphBuilder validates at construction
+✓ Executor only accepts ValidatedGraph
+✓ Zero runtime policy validation verified
+✓ Token integrity verification implemented
+✓ Resource bounds proven at construction
+✓ Resource limits enforced at runtime
+```
+
+## 25.5 Simulator Configuration
+
+```rust
+pub struct SimulatorConfig {
+    /// Random seed for reproducibility
+    pub seed: u64,
+    
+    /// Construction operations to test
+    pub total_constructions: u64,
+    
+    /// Execution operations to test
+    pub total_executions: u64,
+    
+    /// Stop on first violation
+    pub stop_on_first_violation: bool,
+    
+    /// Verify zero runtime policy (CRITICAL)
+    pub verify_zero_runtime_policy: bool,
+}
+
+// Example certification run
+let config = SimulatorConfig {
+    seed: 42,
+    total_constructions: 1_000_000,
+    total_executions: 1_000_000,
+    stop_on_first_violation: true,
+    verify_zero_runtime_policy: true,
+};
+
+let report = run_simulator(config).await;
+assert!(report.passed());
+assert_eq!(report.stats.runtime_policy_validation_count, 0);
+```
+
+## 25.6 Command Line Certification
+
+```bash
+# Run full certification suite
+cargo run -- certify
+
+# Run with custom parameters
+cargo run -- simulate --constructions 1000000 --executions 1000000 --seed 42 --verify-zero-policy
+
+# Run stress test
+cargo run -- stress --nodes 10000 --iterations 5000
+
+# Generate report
+cargo run -- report --json
 ```
 
 ---
 
+# END OF CERTIFICATION CRITERIA

@@ -608,7 +608,7 @@ Unchanged structure—but tests verify:
 
 ---
 
-# 21. SAFE BY CONSTRUCTION GUARANTEE (UPDATED)
+# 21. SAFE BY CONSTRUCTION GUARANTEE
 
 The Kernel guarantees:
 
@@ -640,6 +640,6 @@ COA operates within type constraints enforced at construction.
 * Simulator: [03-simulator.md](./03-simulator.md)
 * Test spec: [04-test-spec.md](./04-test-spec.md)
 * Certification: [05-certify.md](./05-certify.md)
-* Impl notes: [06-impl-notes.md](./06-impl-notes.md)
+* CI/CD integration: [06-cicd.md](./06-cicd.md)
 
 # END OF SPECIFICATION
