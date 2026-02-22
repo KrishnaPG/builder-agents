@@ -20,6 +20,7 @@ For complete specification, see:
 * [03-security.md](./03-security.md) - Security Pipeline and mandatory stages
 * [04-agent-model.md](./04-agent-model.md) - System Primitives, Artifact Model, Agent Model, and Modes
 * [05-operations.md](./05-operations.md) - State Flow, Failure Recovery, Knowledge Graph, Metrics, and Release Criteria
+* [06-composition-strategies.md](./06-composition-strategies.md) - Pluggable Conflict Resolution (SingleWriter, CommutativeBatch, OrderedComposition)
 
 Any deviation requires formal revision control.
 

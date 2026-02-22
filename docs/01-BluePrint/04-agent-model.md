@@ -124,6 +124,16 @@ UpdateConfigValue {
 * **Conflict-detectable**: Semantic conflicts identified before application
 * **Reversible**: Each delta has inverse operation for time scrubber
 
+### Multi-Agent Composition
+
+When multiple agents contribute deltas to the same parent container, the system uses **Composition Strategies** to determine how they interact. See [06-composition-strategies.md](./06-composition-strategies.md) for the complete specification of:
+
+- `SingleWriterStrategy` (default) - Disjoint subtree claims, structurally conflict-free
+- `CommutativeBatchStrategy` - CRDT-style for layers, tracks, nodes
+- `OrderedCompositionStrategy` - Sequential refinement for order-dependent transformations
+
+The COA selects the appropriate strategy based on artifact type and operation semantics.
+
 ---
 
 ## 6. AGENT MODEL (Runtime Agents)
