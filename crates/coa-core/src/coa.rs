@@ -9,8 +9,8 @@
 
 use crate::agent_pool::{AgentPool, AgentHandle};
 use crate::decomposition::TaskDecomposer;
-use crate::error::{COAError, ConstructionError, DecompositionError, Diagnostic, ErrorType, Goal, Location, SuggestedFix};
-use crate::types::{AgentSpec, ArtifactSummary, COAConfig, ExecutionResult, Specification, Task, TaskId, UserIntent};
+use crate::error::{COAError, DecompositionError, Diagnostic, ErrorType, Goal, Location, SuggestedFix};
+use crate::types::{AgentSpec, ArtifactSummary, COAConfig, ExecutionResult, Specification, Task, UserIntent};
 use coa_artifact::{Artifact, ArtifactType, StructuralDelta};
 use coa_constitutional::parsers::CodeArtifact;
 use coa_composition::CompositionStrategy;

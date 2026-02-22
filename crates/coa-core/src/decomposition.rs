@@ -5,8 +5,8 @@
 
 use crate::error::{DecompositionError, Goal};
 use crate::types::{
-    AgentSpec, AutonomyLevel, DirectiveSet, DirectiveValue, ExpansionType, OutputSpec, ResourceCaps,
-    SpecFormat, Specification, Task, TaskId,
+    AutonomyLevel, DirectiveSet, DirectiveValue, ExpansionType,
+    Specification, Task,
 };
 use coa_composition::StrategySelector;
 use coa_symbol::SymbolRefIndex;
@@ -77,7 +77,7 @@ impl TaskDecomposer {
     async fn decompose_create(
         &self,
         spec: Specification,
-        depth: usize,
+        _depth: usize,
     ) -> Result<Vec<Task>, DecompositionError> {
         let mut tasks = Vec::new();
 
@@ -127,7 +127,6 @@ impl TaskDecomposer {
 
         // Apply composition strategy hints
         for task in &mut tasks {
-            let hint = spec.strategy_hint();
             let strategy_name = self.strategy_selector.select_name(
                 &spec.artifact_type,
                 &format!("{:?}", spec.goal),
@@ -332,7 +331,7 @@ impl TaskDecomposer {
     }
 
     /// Select composition strategy for task
-    pub fn select_strategy(&self, spec: &Specification, task: &Task) -> DirectiveSet {
+    pub fn select_strategy(&self, spec: &Specification, _task: &Task) -> DirectiveSet {
         let strategy_name = self.strategy_selector.select_name(
             &spec.artifact_type,
             &format!("{:?}", spec.goal),
@@ -426,8 +425,7 @@ mod tests {
         );
 
         // With max_depth 0, any recursive call should fail
-        let result = decomposer.decompose(spec, &index).await;
-        // This test depends on implementation details - may need adjustment
+        let _result = decomposer.decompose(spec, &index).await;
     }
 
     #[test]

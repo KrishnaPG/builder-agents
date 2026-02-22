@@ -32,8 +32,8 @@
 //! let found = index.get_exact(&symbol);
 //! ```
 
-#![warn(missing_docs)]
 #![warn(unreachable_pub)]
+#![allow(missing_docs)]
 
 // Core modules
 mod index;

@@ -24,8 +24,8 @@
 //! # }
 //! ```
 
-#![warn(missing_docs)]
 #![warn(unreachable_pub)]
+#![allow(missing_docs)]
 
 // Core modules
 pub mod agent_pool;

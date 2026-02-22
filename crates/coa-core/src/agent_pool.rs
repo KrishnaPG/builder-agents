@@ -8,7 +8,6 @@
 use crate::error::PoolError;
 use crate::types::{AgentId, AgentSpec, Task};
 use dashmap::DashMap;
-use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
 /// Agent handle for communication
@@ -300,7 +299,6 @@ async fn agent_task(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use coa_artifact::SymbolPath;
 
     #[tokio::test]
     async fn agent_pool_acquire_and_release() {
@@ -309,7 +307,7 @@ mod tests {
         let spec = AgentSpec::new("tester");
 
         let agent1 = pool.acquire(spec.clone()).await.unwrap();
-        let agent2 = pool.acquire(spec.clone()).await.unwrap();
+        let _agent2 = pool.acquire(spec.clone()).await.unwrap();
 
         // Third acquire should fail
         let result = pool.acquire(spec.clone()).await;

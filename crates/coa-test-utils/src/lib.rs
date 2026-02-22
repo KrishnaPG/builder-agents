@@ -2,4 +2,4 @@
 //! 
 //! Shared test helpers, fixtures, and assertions.
 
-#![warn(missing_docs)]
+#![allow(missing_docs)]

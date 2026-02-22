@@ -28,8 +28,8 @@
 //! let result = strategy.compose(&base, &deltas)?;
 //! ```
 
-#![warn(missing_docs)]
 #![warn(unreachable_pub)]
+#![allow(missing_docs)]
 
 // Strategy implementations
 mod commutative;
