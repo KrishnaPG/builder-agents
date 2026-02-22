@@ -101,11 +101,21 @@ pub enum ArtifactError {
 /// - `hash` is always `T::hash(&content)`
 /// - Immutable after construction
 /// - Cheap to clone (Arc content if needed for large data)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Artifact<T: ArtifactType> {
     hash: ContentHash,
     content: T::Content,
     _phantom: PhantomData<T>,
+}
+
+impl<T: ArtifactType> Clone for Artifact<T> {
+    fn clone(&self) -> Self {
+        Self {
+            hash: self.hash,
+            content: self.content.clone(),
+            _phantom: PhantomData,
+        }
+    }
 }
 
 impl<T: ArtifactType> Artifact<T> {

@@ -270,6 +270,14 @@ dependencies = [
 [[package]]
 name = "coa-composition"
 version = "0.1.0"
+dependencies = [
+ "coa-artifact",
+ "coa-symbol",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "coa-constitutional"

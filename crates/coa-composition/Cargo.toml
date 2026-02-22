@@ -6,9 +6,22 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Composition system for COA - graph construction and orchestration"
+description = "Composition strategies for multi-agent delta coordination"
 
 [dependencies]
+# Core dependencies
+coa-artifact = { path = "../coa-artifact" }
+coa-symbol = { path = "../coa-symbol" }
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
 
 [lints]
 workspace = true
