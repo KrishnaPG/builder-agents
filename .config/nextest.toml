@@ -1,0 +1,8 @@
+[profile.default]
+status-level = "all"
+failure-output = "immediate-final"
+final-status-level = "all"
+
+[profile.default.junit]
+path = ".reports/junit.xml"
+

@@ -1,0 +1,44 @@
+[core_tenet."T1"]
+name = "Artifact Foundations & No Direct IO"
+blueprint_section = "§3.1"
+modules = [
+  "tests::integration::artifact_foundation_plan",
+  "tests::integration::artifact_delta_and_merkle_plan",
+  "tests::integration::no_direct_io_plan",
+]
+
+[core_tenet."T2"]
+name = "Single Writer & Composition Integrity"
+blueprint_section = "§3.2"
+modules = [
+  "tests::integration::single_writer_composition_plan",
+]
+
+[core_tenet."T3"]
+name = "Kernel Two-Phase Architecture"
+blueprint_section = "02-Kernel/01-spec"
+modules = [
+  "tests::integration::kernel_two_phase_plan",
+]
+
+[core_tenet."T4"]
+name = "Security & Autonomy"
+blueprint_section = "02-Kernel/01-spec (Autonomy)"
+modules = [
+  "tests::integration::security_and_autonomy_plan",
+]
+
+[core_tenet."T5"]
+name = "Orchestration & Error Semantics"
+blueprint_section = "coa-core Blueprint"
+modules = [
+  "tests::integration::orchestration_and_errors_plan",
+]
+
+[core_tenet."T6"]
+name = "Performance & Scaling"
+blueprint_section = "Kernel Certification"
+modules = [
+  "tests::integration::performance_and_scaling_plan",
+]
+

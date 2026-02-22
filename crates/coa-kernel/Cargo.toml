@@ -39,6 +39,12 @@ smallvec = { version = "1", optional = true }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1"
+coa-artifact.workspace = true
+coa-symbol.workspace = true
+coa-composition.workspace = true
+coa-constitutional.workspace = true
+coa-core.workspace = true
+coa-test-utils.workspace = true
 
 [features]
 default = []

@@ -50,7 +50,12 @@ pub use path::{PathError, SymbolPath};
 /// Artifact type implementations
 pub mod types {
     //! Concrete artifact types
-
+    //!
+    //! - Binary: Raw byte content
+    //! - Code: Parsed AST with symbol table
+    //! - Config: Schema-validated configuration
+    //! - Spec: Structured specification documents
+    //!
     // Will be implemented next
 }
 
