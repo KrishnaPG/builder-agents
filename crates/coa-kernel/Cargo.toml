@@ -1,14 +1,19 @@
 [package]
-name = "cog_kernel"
-version = "0.1.0"
-edition = "2021"
+name = "coa-kernel"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Cognitive OS Kernel - v2.0"
 
 [lib]
-name = "cog_kernel"
+name = "coa_kernel"
 path = "src/lib.rs"
 
 [[bin]]
-name = "cog-kernel"
+name = "coa-kernel"
 path = "src/main.rs"
 
 [dependencies]

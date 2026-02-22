@@ -1,4 +1,4 @@
-//! COGNITIVE OS Kernel (cog_kernel) - v2.0
+//! COA Kernel (coa-kernel) - v2.0
 //!
 //! Safe-by-construction architecture with two-phase design:
 //! 1. **Construction Phase**: Build and validate graphs
@@ -7,7 +7,7 @@
 //! # Quick Start
 //!
 //! ```rust,ignore
-//! use cog_kernel::prelude::*;
+//! use coa_kernel::prelude::*;
 //!
 //! // Construction phase
 //! let mut builder = GraphBuilder::new(GraphType::ProductionDAG);

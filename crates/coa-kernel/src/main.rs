@@ -1,5 +1,5 @@
 use clap::{Arg, ArgAction, Command, value_parser};
-use cog_kernel::test_harness::{SimulatorConfig, run_simulator, TestHarness};
+use coa_kernel::test_harness::{SimulatorConfig, run_simulator, TestHarness};
 
 #[tokio::main]
 async fn main() {
@@ -102,7 +102,7 @@ async fn main() {
                 verify_zero_runtime_policy: verify_zero_policy,
             };
 
-            let report = run_simulator(config).await;
+            let report: coa_kernel::test_harness::SimulatorReport = run_simulator(config).await;
             
             println!("{}", report.generate_text());
             
