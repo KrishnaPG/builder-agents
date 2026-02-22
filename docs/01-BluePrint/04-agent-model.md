@@ -206,7 +206,7 @@ The trusted component that applies agent-produced deltas.
 **Validation Checks**:
 1. **Type Compatibility**: Delta type matches target Artifact type
 2. **Invariant Preservation**: AST remains valid, symbols resolve
-3. **Conflict Detection**: No concurrent modification of same symbol
+3. **Conflict Detection**: Composition strategy validates delta interactions (see [06-composition-strategies.md](./06-composition-strategies.md))
 4. **Referential Integrity**: All SymbolRefs in delta resolve to existing artifacts
 
 **Output Guarantees**:
@@ -288,17 +288,97 @@ Heatmap overlay required.
 
 ## 8. OUTPUT AND REFERENTIAL INTEGRITY
 
-### Output Integrity (Single-Writer Guarantee)
+### Output Integrity (Single-Writer by Default)
 
-**Construction-time invariant**: Each Artifact node has exactly ONE incoming edge from a delta-producing task.
+**Default Strategy**: `SingleWriterStrategy` enforces single-writer semantics at the granularity specified by the `conflict_granularity()` of the selected strategy.
 
 ```
-Graph construction REJECTS if:
-- Two TaskNodes both produce deltas targeting the same Artifact
+Graph construction REJECTS under SingleWriterStrategy if:
+- Two TaskNodes both claim ownership of the same SymbolRef path (subtree granularity)
 - Target symbol is not unique in namespace
 ```
 
-This makes conflicting writes **impossible by construction**, not detected at runtime.
+**Alternative Strategies** (see [06-composition-strategies.md](./06-composition-strategies.md)):
+- `CommutativeBatchStrategy` - Allows parallel writes to disjoint subtrees when operations commute
+- `OrderedCompositionStrategy` - Sequential refinement for order-dependent transformations  
+- `HybridCompositionStrategy` - Combines parallel batching with sequential refinement
+
+This makes conflicting writes **impossible by construction** under the selected strategy, not merely detected at runtime.
+
+#### 8.1 Sub-Artifact Granularity (Resolved)
+
+**Question**: Can two agents propose deltas targeting different `SymbolRef`s within the same parent artifact?
+
+**Resolution**: **Yes**, with `Subtree` granularity (the default for `SingleWriterStrategy`).
+
+```rust
+// Two agents CAN propose deltas to the same parent artifact if their target SymbolRef paths are disjoint:
+// Agent A: StructuralDelta { target: SymbolRef { file: "utils.ts", path: ["helpers", "formatDate"] }, ... }
+// Agent B: StructuralDelta { target: SymbolRef { file: "utils.ts", path: ["helpers", "parseDate"] }, ... }
+// 
+// These are VALID - different subtrees under "helpers"
+
+// But this is INVALID:
+// Agent A: StructuralDelta { target: SymbolRef { file: "utils.ts", path: ["config", "apiUrl"] }, ... }
+// Agent B: StructuralDelta { target: SymbolRef { file: "utils.ts", path: ["config", "apiUrl"] }, ... }
+// 
+// Same exact path = conflict under SingleWriterStrategy
+```
+
+The granularity is determined by `CompositionStrategy::conflict_granularity()`:
+- `Subtree`: Conflict if paths share ancestor relationship (default for SingleWriter)
+- `Node`: Conflict only on exact node match
+- `Attribute`: Conflict on specific attribute within node
+
+#### 8.2 Dynamic Graph Expansion (Resolved)
+
+**Question**: When COA adds TaskNodes mid-execution, how is single-writer re-validated?
+
+**Resolution**: **Expansion fragments are validated before attachment**, not by modifying the running graph.
+
+```rust
+// 1. COA creates EXPANSION FRAGMENT (isolated subgraph)
+let expansion = graph_builder.create_fragment(|builder| {
+    builder.add_task(write_config_api)?;
+    builder.add_task(write_config_db)?;
+    Ok(())
+})?; // Validation runs HERE, before any attachment
+
+// 2. Fragment validated against CURRENT graph state
+//    - Collects all SymbolRef claims in expansion
+//    - Checks against existing claims in running graph
+//    - REJECTS if overlap detected
+
+// 3. Atomic attachment to running graph
+graph.attach_fragment(expansion)?; // No re-validation needed
+```
+
+**Key insight**: The "running graph" is append-only. We never modify existing nodes—we only attach pre-validated fragments. The validation happens at fragment construction time, not at attachment time.
+
+#### 8.3 Construction-Time Invariant vs CompositionStrategy (Resolved)
+
+**Question**: How does the construction-time invariant map to `SingleWriterStrategy`? Are they the same or layered?
+
+**Resolution**: **They are the SAME check**—the construction-time invariant is implemented BY the selected `CompositionStrategy`.
+
+```rust
+// GraphBuilder delegates to the strategy:
+fn validate_output_integrity(&self, node: &TaskNode) -> Result<(), ValidationError> {
+    let deltas = collect_deltas(&node.agents);
+    
+    // This IS the construction-time invariant check:
+    node.composition_strategy.validate(&deltas)?;
+    
+    Ok(())
+}
+```
+
+**Relationship**:
+- `SingleWriterStrategy.validate()` implements the single-writer construction-time invariant
+- `CommutativeBatchStrategy.validate()` implements the commutative-batch construction-time invariant
+- etc.
+
+The invariant is **parametric**—different strategies enforce different invariants, but ALL are enforced at construction time, making violations impossible by construction for the selected strategy.
 
 ### Referential Integrity (Symbolic Coupling)
 
@@ -319,6 +399,102 @@ Graph construction REJECTS if:
 ```
 
 This makes broken references **impossible by construction**.
+
+#### 8.4 Forward References (Resolved)
+
+**Question**: How to handle mutually recursive functions (`a()` calls `b()`, `b()` calls `a()`)? Both can't exist before the other.
+
+**Resolution**: **Declaration-before-use** via forward-declaration stubs in the same construction batch.
+
+```rust
+// Single TaskNode produces BOTH symbols atomically:
+struct SymbolBatch {
+    declarations: Vec<SymbolDecl>,   // Forward declarations (no implementation)
+    definitions: Vec<SymbolDef>,     // Full implementations (can reference any decl)
+}
+
+// Example for mutual recursion:
+SymbolBatch {
+    declarations: [
+        { name: "is_even", type: "fn(n: i32) -> bool" },
+        { name: "is_odd", type: "fn(n: i32) -> bool" },
+    ],
+    definitions: [
+        { name: "is_even", body: "n == 0 || is_odd(n - 1)" },  // refs is_odd
+        { name: "is_odd", body: "n != 0 && is_even(n - 1)" },  // refs is_even
+    ]
+}
+```
+
+**Key insight**: Declarations are not "incomplete symbols"—they are valid, resolvable symbols with contract-only content. The construction-time validation verifies that all SymbolRefs in `definitions` resolve to symbols in `declarations ∪ existing_graph`.
+
+#### 8.5 Staged Creation (Resolved)
+
+**Question**: If delta A creates symbol X and delta B references X, construction order matters. Is there a topological validation pass?
+
+**Resolution**: **Within a TaskNode: batch atomicity. Across TaskNodes: dependency edges.**
+
+```rust
+// WITHIN same TaskNode: All deltas validated as a batch
+// Symbol X can be created AND referenced in the same batch
+
+// ACROSS TaskNodes: Explicit dependency required
+task_a: TaskNode { produces: [Symbol "X"], ... }
+task_b: TaskNode { 
+    references: [Symbol "X"],  // Must resolve to existing symbol
+    depends_on: [task_a],       // Explicit edge establishes order
+    ... 
+}
+
+// Validation order:
+// 1. Topologically sort TaskNodes by dependency edges
+// 2. For each TaskNode in order:
+//    - Collect all symbols from dependencies
+//    - Validate this TaskNode's deltas against accumulated symbols
+//    - Add this TaskNode's produced symbols to accumulated set
+```
+
+**No global topological pass needed**—dependencies are explicit in the graph structure, and validation follows the graph topology naturally.
+
+#### 8.6 Cross-Boundary References (Resolved)
+
+**Question**: How are external references (npm crates, system libraries) handled? They don't exist in the Artifact graph.
+
+**Resolution**: **External symbols are first-class Artifacts via "System" crate.**
+
+```rust
+// External dependencies are represented as read-only Artifacts:
+SymbolRef { 
+    crate: "system:std",        // "system:" prefix denotes external
+    module: "collections", 
+    symbol: "HashMap" 
+}
+
+SymbolRef {
+    crate: "system:npm:lodash",  // External npm package
+    module: "index",
+    symbol: "debounce"
+}
+```
+
+**System Artifacts**:
+- Generated once at workspace initialization by scanning `Cargo.toml`, `package.json`, etc.
+- Read-only (no agent can propose deltas targeting them)
+- Full SymbolRef tree exposed (types, functions, constants)
+- Version-pinned (hash includes version constraint)
+
+```rust
+// Graph construction includes System Artifacts as roots:
+ValidatedGraph {
+    roots: [
+        system_artifacts: ["system:std", "system:npm:lodash", ...],
+        workspace_artifacts: [...],
+    ],
+    tasks: [...],
+}
+```
+
+This makes external references **resolvable at construction time** just like internal references—all SymbolRefs point to Artifacts in the graph, whether user-created or system-provided.
 
 ### Semantic Coupling (Spec-Code-Test Chain)
 

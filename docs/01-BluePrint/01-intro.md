@@ -171,6 +171,7 @@ When Spec changes:
 | [03-security.md](./03-security.md) | Security Pipeline (Mandatory Stages) |
 | [04-agent-model.md](./04-agent-model.md) | System Primitives, Artifact Model, Agent Model, Modes, Output/Referential Integrity |
 | [05-operations.md](./05-operations.md) | State Flow, Failure/Recovery, Knowledge Graph, Metrics, Minimum Requirements |
+| [06-composition-strategies.md](./06-composition-strategies.md) | Conflict Resolution Strategies for Multi-Agent Composition |
 
 ---
 

@@ -86,6 +86,17 @@ Class UserService
 Parent "methods" assembles children mechanically (no agent writes here)
 ```
 
+#### Design Questions Resolved
+
+**Q1: Same artifact, different symbols?**
+Yes—`Subtree` granularity allows agents to propose deltas targeting different `SymbolRef` paths within the same parent artifact. The invariant is enforced at the subtree level, not the artifact level.
+
+**Q2: Dynamic expansion?**
+Expansion fragments are validated in isolation before atomic attachment. The running graph is never modified—only extended with pre-validated fragments. See [04-agent-model.md section 8.2](./04-agent-model.md#82-dynamic-graph-expansion-resolved).
+
+**Q3: Relationship to construction-time invariant?**
+`SingleWriterStrategy.validate()` IS the construction-time invariant check. The invariant is parametric by strategy—all strategies enforce their specific invariants at construction time. See [04-agent-model.md section 8.3](./04-agent-model.md#83-construction-time-invariant-vs-compositionstrategy-resolved).
+
 ---
 
 ### 2.2 CommutativeBatchStrategy
@@ -643,11 +654,29 @@ fn validate_composition(&self, node: &TaskNode) -> Result<(), ValidationError> {
 
 ## Summary
 
-The CompositionStrategy trait provides **pluggable conflict resolution**:
+The CompositionStrategy trait provides **pluggable conflict resolution** with **safe-by-construction guarantees**:
 
 - **SingleWriterStrategy** (default): Maximum safety, universal applicability, requires fine-grained COA decomposition
 - **CommutativeBatchStrategy** (Approach 2): Maximum parallelism for commutative operations (layers, tracks, nodes)
 - **OrderedCompositionStrategy** (Approach 3): Sequential refinement for order-dependent transformations
 - **HybridCompositionStrategy** (2+3): Combines commutative batching with ordered refinement for mixed operation pipelines—recommended for creative tools
 
-The COA selects strategies based on artifact type and operation semantics. **SingleWriter remains the default** for safety. **Hybrid is recommended** for creative domains (images, audio, 3D) where both parallel generation and sequential refinement occur naturally.
+### Safety Alignment with Core Principles
+
+**All composition strategies are validated at graph construction time**, not runtime:
+
+```
+Construction Phase:                          Runtime Phase:
+┌──────────────────────────────────┐       ┌──────────────────────────────────┐
+│ Strategy.validate(&deltas)        │  →   │ strategy.compose(base, deltas)   │
+│ - Conflict detection               │       │ - Mechanical execution only      │
+│ - Commutativity verification       │       │ - No validation, no decisions    │
+│ - Ordering constraint check        │       │ - No runtime governance          │
+└──────────────────────────────────┘       └──────────────────────────────────┘
+         ↑                                         ↑
+   REJECT if invalid                         EXECUTE as validated
+```
+
+This aligns with the **safe-by-construction architecture**: conflicts are **impossible by construction** under the selected strategy, not detected at runtime. The COA selects strategies based on artifact type and operation semantics at graph construction time.
+
+**SingleWriter remains the default** for maximum safety. **Hybrid is recommended** for creative domains (images, audio, 3D) where both parallel generation and sequential refinement occur naturally.
