@@ -32,10 +32,12 @@ Problem: Agent overwrote your changes, added a backdoor, or corrupted the file
 ```
 Agent: "I propose adding a login method to the AuthService class"
 ↓
-Constitutional Layer: "Is this valid? Does it break invariants? Any conflicts?"
+Graph Construction: "Is this valid? Does it break invariants? Any conflicts?"
 ↓
-If valid → Applied atomically
-If invalid → Rejected, agent notified, human can review
+If valid → Delta embedded in ValidatedGraph
+If invalid → Graph construction REJECTS, COA notified
+↓
+Runtime → Constitutional Layer applies atomically (zero validation)
 ```
 
 **Key Insight**: The agent is like a consultant giving advice, not a contractor with keys to your house.
@@ -53,20 +55,23 @@ If invalid → Rejected, agent notified, human can review
 ### Technical Representation
 
 ```rust
-// What the agent produces
+// What the agent produces (during task execution)
 TransformationProposal<StructuralDelta<T>> {
     delta: StructuralDelta<T>,      // The actual change
     target: SymbolRef,              // What to change (symbolic, not path)
-    base_hash: ContentHash,         // Expected state (detects conflicts)
+    base_hash: ContentHash,         // Expected state (for optimistic concurrency check)
     metadata: ProposalMetadata,     // Agent id, timestamp, reasoning
 }
 
-// The Constitutional Layer validates and applies
-enum ProposalResult {
-    Applied(ContentHash),           // New artifact version
-    Rejected(ValidationError),      // Why it failed
-    Conflict(Vec<ProposalRef>),     // Concurrent proposals need resolution
+// Construction-time validation result (before runtime execution)
+enum ConstructionValidation {
+    Validated,                      // Delta embedded in graph, will execute
+    Rejected(ValidationError),      // Graph construction fails, COA must handle
 }
+
+// Note: Conflicts are impossible by construction—SingleWriterStrategy and
+// composition validation reject overlapping claims at graph construction time.
+// No "conflict resolution" happens at runtime.
 ```
 
 **The agent sees**: Symbols, types, structure  
@@ -121,7 +126,7 @@ UpdateConfigValue {
 
 * **Type-safe**: Delta<T> can only apply to Artifact<T>
 * **Invariant-preserving**: Constitutional layer verifies AST remains valid
-* **Conflict-detectable**: Semantic conflicts identified before application
+* **Conflict-free by construction**: Composition strategy validates no overlapping claims at graph construction time
 * **Reversible**: Each delta has inverse operation for time scrubber
 
 ### Multi-Agent Composition
@@ -194,25 +199,38 @@ Unbounded recursion prevented by construction-time recursion depth limits.
 
 ## 6.3 Constitutional Application Layer
 
-The trusted component that applies agent-produced deltas.
+The trusted component with TWO distinct phases: **Construction-Time Validation** and **Runtime Application**.
+
+### Phase 1: Construction-Time Validation
+
+**When**: Graph construction (before any runtime execution)
 
 **Responsibilities**:
 - Parse external files into TypedTree Artifacts (on ingress)
-- Validate StructuralDelta<T> against target Artifact<T>
-- Detect conflicts between concurrent deltas
+- Validate StructuralDelta<T> against target Artifact<T> type
+- Verify composition strategy (no overlapping claims under selected strategy)
+- Resolve all SymbolRefs to existing artifacts (referential integrity)
+- Enforce output integrity (single-writer invariant)
+
+**Result**: ValidatedGraph (immutable, proof-carrying)
+
+### Phase 2: Runtime Application
+
+**When**: Task execution (zero validation, mechanical only)
+
+**Responsibilities**:
+- Receive agent's TransformationProposal
+- Verify base_hash matches expected state (optimistic concurrency, not conflict detection)
 - Apply deltas atomically to produce new Artifact versions
+- Update Merkle DAG with new content hashes
 - Serialize Artifacts back to external format (on egress)
 
-**Validation Checks**:
-1. **Type Compatibility**: Delta type matches target Artifact type
-2. **Invariant Preservation**: AST remains valid, symbols resolve
-3. **Conflict Detection**: Composition strategy validates delta interactions (see [06-composition-strategies.md](./06-composition-strategies.md))
-4. **Referential Integrity**: All SymbolRefs in delta resolve to existing artifacts
+**Key Invariant**: Runtime application performs **NO validation**—all validation happened at construction time. The layer mechanically applies pre-validated deltas.
 
-**Output Guarantees**:
+### Output Guarantees
 - Applied deltas produce content-addressed, immutable artifacts
 - Old artifact versions remain accessible via hash
-- New artifact automatically updates symbolic references
+- New artifact hash propagates through dependent SymbolRefs
 
 ---
 

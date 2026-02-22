@@ -23,7 +23,7 @@ pub trait CompositionStrategy: Send + Sync {
     /// Parallelism characteristics for execution planning
     fn parallelism(&self) -> Parallelism;
     
-    /// Granularity of conflict detection (subtree path, atomic node, etc.)
+    /// Granularity of construction-time conflict detection (subtree path, atomic node, etc.)
     fn conflict_granularity(&self) -> Granularity;
 }
 
