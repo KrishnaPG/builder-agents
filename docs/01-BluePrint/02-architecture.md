@@ -4,6 +4,16 @@
 
 ---
 
+## 3.0 Artifact System (Foundation)
+
+All system layers operate on **Artifacts** - structured, typed representations of work products.
+
+**Principle**: Agents never interact with raw files, text buffers, or byte streams. The external world (filesystem) is parsed into Artifacts on ingress; Artifacts are serialized on egress.
+
+See [04-agent-model.md](./04-agent-model.md) for Artifact<T> and StructuralDelta<T> specifications.
+
+---
+
 ## 3.1 Construction-Time Validation Layer (Immutable)
 
 This layer validates graphs **before** they become executable. It does not exist at runtime.
@@ -21,16 +31,21 @@ This layer validates graphs **before** they become executable. It does not exist
 - Resource bound proving
 - Security pipeline completeness
 - DAG integrity
+- Artifact type consistency (delta type matches target)
+- Symbolic reference resolution (all SymbolRefs valid)
+- Output integrity (single-writer guarantee)
 
 **Integrity Verification** (Runtime only):
 - Cryptographic token signature verification
 - Token expiration checking
 - Hash-chain log verification
+- Artifact content hash verification
 
 **Primitive Enforcement** (Runtime):
 - Container cgroups enforcing declared memory limits
 - CPU time limits via process constraints
 - State machine transition enforcement
+- No filesystem access (agents run in isolated context)
 
 ### Validated at Construction Time
 
@@ -40,6 +55,9 @@ This layer validates graphs **before** they become executable. It does not exist
 * Security pipeline completeness (mandatory stages, not optional checks)
 * Autonomy ceiling compliance (encoded in node type, not checked at runtime)
 * Agent contract schema validation
+* **Artifact type compatibility (delta can apply to target artifact)**
+* **Referential integrity (all symbolic references resolve)**
+* **Output integrity (no conflicting writers to same artifact)**
 
 **Once validation passes, the graph is frozen. Execution proceeds with zero policy checks.**
 
@@ -58,6 +76,9 @@ COA cannot bypass this layer—all graphs must pass validation before execution 
 │  • Resource bounds proven against system limits                 │
 │  • Security pipeline verified complete                          │
 │  • Capability tokens issued and bound to nodes                  │
+│  • Artifact types checked (delta<T> → target<T>)                │
+│  • Symbolic references resolved                                 │
+│  • Single-writer invariant enforced per artifact                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼ ValidationToken (cryptographic proof)
@@ -69,6 +90,8 @@ COA cannot bypass this layer—all graphs must pass validation before execution 
 │  • Token signature verified (cryptographic integrity)           │
 │  • State transitions deterministic (pre-defined contract)       │
 │  • Container primitives enforce declared bounds                 │
+│  • Agents produce StructuralDelta<T> (type-enforced)            │
+│  • Constitutional layer applies deltas atomically               │
 │                                                                  │
 │  NO "validate_action" calls. NO "check_policy" queries.        │
 └─────────────────────────────────────────────────────────────────┘
@@ -95,6 +118,8 @@ The COA is the only persistent cognitive authority.
 * Allocate autonomy levels per node (statically encoded)
 * **Construct graphs via GraphBuilder that pass validation**
 * **Provide subgraph specifications for dynamic expansion**
+* **Parse external files into TypedTree Artifacts (ingress)**
+* **Apply StructuralDeltas via Constitutional Layer (egress)**
 * Escalate to human when required (via embedded escalation contracts)
 * Dissolve runtime agents after task completion
 * Update knowledge graph within policy boundaries
@@ -110,6 +135,7 @@ COA cannot:
 * Inject undeclared dependencies (enforced by graph primitives)
 * Write verified knowledge without validation
 * Bypass construction validation to execute graphs
+* Directly modify Artifacts (must go through Constitutional Layer)
 
 **COA actions are validated at construction time, not runtime.**
 
@@ -121,16 +147,17 @@ All projects are decomposed into atomic micro tasks.
 
 Each micro task contains:
 
-* Input specification
-* Acceptance criteria
-* Neighbor interface constraints
+* Input specification (Artifact<Spec>)
+* Acceptance criteria (linked to spec artifacts)
+* Neighbor interface constraints (symbolic references)
 * **Autonomy ceiling (encoded in task type)**
 * **Resource bound declaration (part of task type)**
+* **Output artifact type (enforced at construction)**
 
 Every task must:
 
-* Generate tests first
-* Implement code
+* Generate tests first (derive from spec artifact)
+* Implement code (structural transformation)
 * Pass tests before merge
 
 ---
@@ -140,11 +167,13 @@ Every task must:
 Every micro task executes inside an isolated execution container.
 
 * Container memory boundaries enforced by container primitives (not runtime checks)
+* **No filesystem access (enforced by container absence of FS)**
+* **No network access (enforced unless explicitly declared)**
 * No hidden shared memory between nodes (enforced by graph topology)
 * Agents may access only:
 
-  * Task specification
-  * Explicit neighbor interface schemas (type-checked at construction)
+  * Task specification (Artifact<Spec>)
+  * Explicit dependency Artifacts via SymbolRef (type-checked at construction)
   * Approved stack dependencies (validated at construction)
   * Read-only verified knowledge
 
@@ -171,16 +200,19 @@ The UX displays software as a directed network graph.
 
 Nodes:
 
-* Module
-* Task container
+* Module (Artifact<Code>)
+* Task container (Agent execution node)
 * Agent group
+* **Artifact<T> (typed artifact node)**
 * **Expansion stub (declares dynamic expansion capability)**
 
 Edges:
 
-* Dependency
+* Dependency (Artifact A depends on Artifact B)
+* Derivation (Artifact B derived from Artifact A)
 * API flow
 * Data flow
+* **Symbolic reference (Ref from A to symbol in B)**
 * **Expansion dependency (parent-child relationship)**
 
 Node states:
@@ -199,6 +231,7 @@ Graph Consistency Contract (enforced by construction primitives):
 * Edge modification requires graph reconstruction and revalidation
 * Node deletion prohibited (nodes may be marked deprecated)
 * Node deactivation preserves historical trace
+* **Single-writer per Artifact (enforced at edge insertion)**
 
 ---
 
@@ -214,6 +247,7 @@ Custom ingestion must:
 * Generate dependency manifest
 * Validate license compliance (at construction time)
 * Generate specialized runtime agent schema
+* **Parse library into TypedTree Artifacts for agent consumption**
 
 Stack selection locks dependency boundaries per branch (enforced by type system).
 
@@ -235,7 +269,8 @@ All agent actions must log:
 
 * Prompt inputs
 * Internal reasoning traces
-* Code diffs
+* **Proposed StructuralDeltas (semantic diff)**
+* Applied deltas (after constitutional validation)
 * Test outputs
 * Stack versions
 * Autonomy level (as encoded, not as checked)
@@ -254,11 +289,14 @@ Log tampering invalidates deployment eligibility.
 
 Live stream of:
 
-* Code changes
+* **Structural deltas (semantic changes)**
+* **Artifact transitions (old_hash → new_hash)**
 * Config changes
 * Test updates
 
 Pause, inspect, rewind supported.
+
+**Diff representation**: Structural diffs showing AST changes, not text patches.
 
 ---
 
@@ -273,6 +311,7 @@ Supports:
 * Benchmark generation
 * Chart generation
 * Paper drafting
+* **Experimental artifact generation (type-checked, but not production)**
 
 Knowledge Graph integration:
 
@@ -296,9 +335,14 @@ Zoom levels:
 
 1. Macro: workflows and system clusters
 2. Meso: modules and pipelines
-3. Micro: reasoning threads
+3. Micro: reasoning threads and **structural deltas**
 
 Graph state must synchronize in real time with execution engine.
+
+**Artifact Inspection**:
+- Hover: Symbol summary and type
+- Click: View AST structure (not raw text)
+- Diff: Semantic comparison between versions
 
 ---
 
@@ -327,6 +371,7 @@ Directives modify:
 * Agent debate length
 * Security scan depth (pipeline stage configuration)
 * Documentation requirements
+* **Artifact validation strictness (schema-only vs full semantic)**
 
 ---
 
@@ -399,6 +444,7 @@ Supports:
 * Visual replay
 * Autonomy inspection
 * Directive comparison
+* **Structural delta replay (watch AST transform)**
 * Code diff comparison
 
 Scrubbing does not mutate history.
@@ -447,6 +493,7 @@ For dynamic graph expansion:
    * Verify resource bounds
    * Verify autonomy ceilings
    * Verify security pipeline completeness
+   * **Verify artifact type consistency in expanded subgraph**
 4. **Stage 4 - Graph Splicing**: Insert validated subgraph into execution graph
 5. **Stage 5 - Continuation**: Resume execution with expanded graph
 
@@ -470,6 +517,7 @@ Stage 3 Validation (at t=1):
 ├── Validate all branches satisfy BenchmarkRun schema
 ├── Verify total resources (A + B + Framework) < parent declared max
 ├── Verify autonomy ceiling inherited correctly
+├── **Verify artifact types compatible with parent graph artifacts**
 └── Generate execution token
 
 At t=2 (post-validation):

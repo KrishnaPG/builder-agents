@@ -1,6 +1,6 @@
 # COGNITIVE OPERATING SYSTEM
 
-## Foundational Blueprint v2.1
+## Foundational Blueprint v2.2
 
 ### Safe-by-Construction Architecture with Typed Dynamic Expansion
 
@@ -11,12 +11,14 @@ This document defines:
 * System identity
 * Constitutional invariants
 * Execution model
+* Artifact system (TypedTree)
+* Output and referential integrity guarantees
 
 For complete specification, see:
 
 * [02-architecture.md](./02-architecture.md) - System Layers, Execution Engine, Cognitive Orchestration, Dynamic Graph Expansion
 * [03-security.md](./03-security.md) - Security Pipeline and mandatory stages
-* [04-agent-model.md](./04-agent-model.md) - System Primitives, Agent Model, and Modes
+* [04-agent-model.md](./04-agent-model.md) - System Primitives, Artifact Model, Agent Model, and Modes
 * [05-operations.md](./05-operations.md) - State Flow, Failure Recovery, Knowledge Graph, Metrics, and Release Criteria
 
 Any deviation requires formal revision control.
@@ -34,6 +36,7 @@ It combines:
 * Adjustable autonomy
 * Full temporal traceability
 * Safe-by-construction graph assembly
+* **Structural artifact model (not text/files)**
 * Research sandbox capability
 * Policy-bound runtime agent generation
 
@@ -73,8 +76,88 @@ The COA is programmable but constitutionally constrained.
 13. **Graphs must be safe by construction; no runtime governance validation permitted.**
 14. **All policy enforcement occurs at graph construction time; execution follows proven-safe structure.**
 15. **Dynamic graph expansion requires staged construction: expansion output is typed as subgraph specification, validated before execution.**
+16. **Agents produce structural deltas, not text; artifacts are typed trees, not files.**
+17. **Output integrity and referential integrity are guaranteed by construction, not checked at runtime.**
 
 If any feature violates these, it is invalid.
+
+---
+
+# 3. ARTIFACT SYSTEM FOUNDATION
+
+## 3.1 First Principle: No Direct IO + A File Is Not a String
+
+**Agents never interact with raw files, text buffers, or byte streams.**
+
+**Agents cannot CRUD files. They can only propose changes.**
+
+See [04-agent-model.md](./04-agent-model.md#51-no-direct-io-model) for the complete No Direct IO Model.
+
+The system operates on **Artifacts** - structured, typed representations:
+
+| External Form | Internal Artifact | Type |
+|--------------|-------------------|------|
+| Code files (`.ts`, `.rs`, `.py`) | AST + Symbol table + Module graph | `Artifact<Code>` |
+| Config files (`.yaml`, `.json`) | Schema-validated tree | `Artifact<Config>` |
+| Spec documents (`.md`) | Structured document model | `Artifact<Spec>` |
+| Binary assets | Content hash + Metadata | `Artifact<Binary>` |
+
+**Agents do not write files. They compute StructuralDelta<T>.**
+
+The **Constitutional Application Layer** handles:
+- Parsing external files into Artifacts (ingress)
+- Validating and applying StructuralDeltas
+- Serializing Artifacts to external format (egress)
+
+## 3.2 Output Integrity (Impossible by Construction)
+
+**The Problem**: Multiple tasks writing to the same file → race conditions, data loss.
+
+**The Solution**: Single-writer invariant enforced at graph construction time.
+
+```
+Graph Construction REJECTS if:
+- Two TaskNodes both target the same Artifact
+- Target symbol is not unique in namespace
+```
+
+This makes conflicting writes **structurally impossible**, not merely detected.
+
+## 3.3 Referential Integrity (Impossible by Construction)
+
+**The Problem**: Spec changes, tests don't update → false positives.
+
+**The Solution**: Symbolic references with construction-time resolution.
+
+```
+Cross-artifact references use SymbolRef (not paths):
+  SymbolRef { crate: "auth", module: "login", symbol: "validateToken" }
+
+Graph Construction REJECTS if:
+- Delta references SymbolRef that does not exist
+- Referenced symbol was removed by another delta
+- Spec artifact changed but derived artifacts not regenerated
+```
+
+This makes broken references **structurally impossible**.
+
+## 3.4 Semantic Coupling
+
+The system maintains explicit derivation chains:
+
+```
+Spec Artifact ──derives──► Code Artifact ──produces──► Output
+       │                        │
+       └──derives──► Test Artifact ───validates───────┘
+```
+
+When Spec changes:
+1. Spec Artifact hash changes
+2. Derivation edges break (construction-time detection)
+3. Graph reconstruction required
+4. COA must regenerate Code and Test from new Spec
+
+**Spec-code-test drift is impossible by construction.**
 
 ---
 
@@ -82,10 +165,10 @@ If any feature violates these, it is invalid.
 
 | Document | Contents |
 |----------|----------|
-| [01-intro.md](./01-intro.md) | System Identity, Core Principles (this file) |
+| [01-intro.md](./01-intro.md) | System Identity, Core Principles, Artifact System (this file) |
 | [02-architecture.md](./02-architecture.md) | System Layers, Execution Engine, Cognitive Orchestration, Dynamic Graph Expansion |
 | [03-security.md](./03-security.md) | Security Pipeline (Mandatory Stages) |
-| [04-agent-model.md](./04-agent-model.md) | System Primitives, Agent Model, Modes |
+| [04-agent-model.md](./04-agent-model.md) | System Primitives, Artifact Model, Agent Model, Modes, Output/Referential Integrity |
 | [05-operations.md](./05-operations.md) | State Flow, Failure/Recovery, Knowledge Graph, Metrics, Minimum Requirements |
 
 ---
@@ -103,6 +186,7 @@ When implemented correctly, the system is:
 * Orchestrator driven
 * Constitutionally constrained
 * **Capable of dynamic expansion without runtime governance**
+* **Structurally immune to output conflicts and reference drift**
 
 This document set defines the build boundary.
 
