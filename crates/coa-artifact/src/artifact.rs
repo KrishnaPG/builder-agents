@@ -67,7 +67,8 @@ pub trait ArtifactType: Send + Sync + 'static + Debug + private::Sealed {
 ///
 /// This trait is crate-public for testing but marked `#[doc(hidden)]`
 /// to discourage external implementations.
-pub(crate) mod private {
+#[doc(hidden)]
+pub mod private {
     /// Sealed trait marker
     pub trait Sealed {}
 }

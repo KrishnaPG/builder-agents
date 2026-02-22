@@ -34,6 +34,13 @@ mod path;
 
 // Re-exports
 pub use artifact::{Artifact, ArtifactError, ArtifactType, DynArtifactRef};
+
+/// Sealed trait support - for implementing custom artifact types.
+/// **Note:** This is only for internal/testing use and may change.
+#[doc(hidden)]
+pub mod __private {
+    pub use super::artifact::private::Sealed;
+}
 pub use delta::{
     DeltaBuilder, DeltaError, DeltaOperation, StructuralDelta, TransformError, Transformation,
 };

@@ -6,27 +6,25 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Content-addressed symbolic references with radix tree index"
+description = "Symbol reference system with content-addressed indexing"
 
 [dependencies]
-# Core
-coa-artifact.workspace = true
+# Core dependency
+coa-artifact = { path = "../coa-artifact" }
 
 # Collections
+radix_trie.workspace = true
 dashmap.workspace = true
-parking_lot.workspace = true
-radix_trie = "0.2"
 
 # Serialization
-serde = { workspace = true, features = ["derive"] }
+serde.workspace = true
 hex.workspace = true
 
 # Error handling
 thiserror.workspace = true
 
-# Utilities
-uuid.workspace = true
-
 [dev-dependencies]
 proptest.workspace = true
-tokio = { workspace = true, features = ["test-util"] }
+
+[lints]
+workspace = true

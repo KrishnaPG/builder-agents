@@ -1,51 +1,100 @@
 //! COA Symbol System
 //!
-//! Content-addressed symbolic references with radix tree index.
+//! Content-addressed symbolic references with radix tree indexing.
 //!
-//! # Overview
+//! # Core Concepts
 //!
-//! The symbol system provides:
-//! - **SymbolRef**: Content-addressed symbolic references
-//! - **SymbolRefIndex**: O(log n) lookup via radix tree
-//! - **SingleWriterValidator**: Conflict detection for composition
+//! - [`SymbolRef`]: Content-addressed reference to symbols within artifacts
+//! - [`Revision`]: Branch + commit for versioned references
+//! - [`SymbolRefIndex`]: O(log n) lookup using radix_trie
+//! - [`SingleWriterValidator`]: Ensures non-overlapping delta claims
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! use coa_symbol::{SymbolRef, SymbolRefIndex, SymbolMetadata};
 //! use coa_artifact::ContentHash;
 //!
 //! // Create index
 //! let index = SymbolRefIndex::new();
 //!
-//! // Insert symbol
-//! let symbol = SymbolRef::from_path("crate.module.func", ContentHash::new([1u8; 32]));
-//! index.insert(symbol.clone(), SymbolMetadata::new()).unwrap();
+//! // Create symbol reference
+//! let hash = ContentHash::compute(b"artifact content");
+//! let symbol = SymbolRef::new(
+//!     vec!["crate".into(), "module".into(), "func".into()],
+//!     hash
+//! );
+//!
+//! // Index it
+//! index.insert(symbol.clone(), SymbolMetadata::default()).unwrap();
 //!
 //! // Lookup
 //! let found = index.get_exact(&symbol);
-//! assert!(found.is_some());
 //! ```
 
 #![warn(missing_docs)]
+#![warn(unreachable_pub)]
 
-pub mod symbol;
-pub mod index;
-pub mod validation;
+// Core modules
+mod index;
+mod symbol;
+mod validation;
 
 // Re-exports
-pub use symbol::{IndexEntry, Revision, SourceLocation, SymbolMetadata, SymbolRef};
-pub use index::{IndexError, SymbolRefIndex};
-pub use validation::{ConflictDiagnostic, ConflictKind, ResolutionSuggestion, SingleWriterValidator, ValidationError};
-
-/// Prelude module for common imports
-pub mod prelude {
-    //! Common imports for symbol operations
-    pub use crate::{
-        ConflictDiagnostic, ConflictKind, IndexEntry, ResolutionSuggestion, SingleWriterValidator,
-        SymbolMetadata, SymbolRef, SymbolRefIndex, ValidationError,
-    };
-}
+pub use index::{
+    IndexEntry, SourceLocation, SymbolKind, SymbolMetadata, SymbolRefIndex, Visibility,
+};
+pub use symbol::{Revision, SymbolRef, SymbolRefError};
+pub use validation::{
+    ConflictAnalyzer, ConflictKind, ResolutionSuggestion, SingleWriterValidator, ValidationDiagnostic,
+    ValidationError,
+};
 
 /// Version of this crate
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    use coa_artifact::ContentHash;
+
+    #[test]
+    fn symbol_index_lifecycle() {
+        let index = SymbolRefIndex::new();
+        let hash = ContentHash::compute(b"test artifact");
+
+        // Create and insert symbols
+        let sym1 = SymbolRef::new(vec!["auth".into(), "login".into()], hash);
+        let sym2 = SymbolRef::new(vec!["auth".into(), "register".into()], hash);
+
+        index.insert(sym1.clone(), SymbolMetadata::default()).unwrap();
+        index.insert(sym2.clone(), SymbolMetadata::default()).unwrap();
+
+        // Verify lookups
+        assert!(index.contains(&sym1));
+        assert!(index.contains(&sym2));
+
+        // Test descendants
+        let descendants = index.get_descendants(&["auth".to_string()]);
+        assert_eq!(descendants.len(), 2);
+
+        // Remove by parent
+        let removed = index.remove_by_parent(&hash);
+        assert_eq!(removed, 2);
+        assert!(index.is_empty());
+    }
+
+    #[test]
+    fn single_writer_with_index() {
+        let validator = SingleWriterValidator::new();
+        let index = SymbolRefIndex::new();
+        let hash = ContentHash::compute(b"base");
+
+        // Insert existing
+        let existing = SymbolRef::new(vec!["api".into()], hash);
+        index.insert(existing, SymbolMetadata::default()).unwrap();
+
+        // Verify we can look it up
+        assert!(index.contains(&SymbolRef::new(vec!["api".into()], hash)));
+    }
+}

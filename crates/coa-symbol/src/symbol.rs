@@ -262,7 +262,7 @@ impl Display for SymbolRef {
     }
 }
 
-/// Errors for SymbolRef parsing
+/// Errors for SymbolRef operations
 #[derive(Debug, thiserror::Error)]
 pub enum SymbolRefError {
     /// Invalid format
@@ -276,6 +276,18 @@ pub enum SymbolRefError {
     /// Empty path
     #[error("symbol path cannot be empty")]
     EmptyPath,
+
+    /// Duplicate symbol
+    #[error("duplicate symbol at path: {path}")]
+    DuplicateSymbol { path: String },
+
+    /// Overlapping symbol claims
+    #[error("symbol path overlaps with existing: {path}")]
+    OverlappingClaims { path: String },
+
+    /// Lock poisoned
+    #[error("index lock poisoned")]
+    LockPoisoned,
 }
 
 #[cfg(test)]

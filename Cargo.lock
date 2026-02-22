@@ -311,13 +311,10 @@ dependencies = [
  "coa-artifact",
  "dashmap",
  "hex",
- "parking_lot",
  "proptest",
  "radix_trie",
  "serde",
  "thiserror",
- "tokio",
- "uuid",
 ]
 
 [[package]]
