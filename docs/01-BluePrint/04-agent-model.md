@@ -400,101 +400,80 @@ Graph construction REJECTS if:
 
 This makes broken references **impossible by construction**.
 
-#### 8.4 Forward References (Resolved)
+#### 8.4 Forward References (Not a Problem)
 
-**Question**: How to handle mutually recursive functions (`a()` calls `b()`, `b()` calls `a()`)? Both can't exist before the other.
+**Question**: How to handle mutually recursive structures (A references B, B references A)?
 
-**Resolution**: **Declaration-before-use** via forward-declaration stubs in the same construction batch.
+**Resolution**: **Not a SymbolRef problem. Internal structure is opaque to the graph.**
 
-```rust
-// Single TaskNode produces BOTH symbols atomically:
-struct SymbolBatch {
-    declarations: Vec<SymbolDecl>,   // Forward declarations (no implementation)
-    definitions: Vec<SymbolDef>,     // Full implementations (can reference any decl)
-}
+SymbolRef points to **nodes in the Merkle DAG**, not to internal AST relationships. If an artifact's internal structure (AST, document tree, etc.) contains mutual references, that's the artifact's internal concern:
 
-// Example for mutual recursion:
-SymbolBatch {
-    declarations: [
-        { name: "is_even", type: "fn(n: i32) -> bool" },
-        { name: "is_odd", type: "fn(n: i32) -> bool" },
-    ],
-    definitions: [
-        { name: "is_even", body: "n == 0 || is_odd(n - 1)" },  // refs is_odd
-        { name: "is_odd", body: "n != 0 && is_even(n - 1)" },  // refs is_even
-    ]
-}
+```
+Artifact<UserModule> (hash: abc123...)
+├── SymbolRef: "helpers/is_even" → points to subtree node
+│   └── AST internally: calls "is_odd" (internal reference, not SymbolRef)
+└── SymbolRef: "helpers/is_odd" → points to subtree node
+    └── AST internally: calls "is_even" (internal reference, not SymbolRef)
 ```
 
-**Key insight**: Declarations are not "incomplete symbols"—they are valid, resolvable symbols with contract-only content. The construction-time validation verifies that all SymbolRefs in `definitions` resolve to symbols in `declarations ∪ existing_graph`.
+The graph only validates that SymbolRefs resolve. Internal AST structure is validated by the **Constitutional Application Layer** when parsing/applying deltas, not by graph construction.
 
-#### 8.5 Staged Creation (Resolved)
+**Key insight**: SymbolRef is for **cross-artifact** linking. Intra-artifact structure is the artifact type's responsibility.
 
-**Question**: If delta A creates symbol X and delta B references X, construction order matters. Is there a topological validation pass?
+#### 8.5 Staged Creation (Hash-Bound)
 
-**Resolution**: **Within a TaskNode: batch atomicity. Across TaskNodes: dependency edges.**
+**Question**: If artifact A references artifact B, how is construction order enforced?
 
-```rust
-// WITHIN same TaskNode: All deltas validated as a batch
-// Symbol X can be created AND referenced in the same batch
-
-// ACROSS TaskNodes: Explicit dependency required
-task_a: TaskNode { produces: [Symbol "X"], ... }
-task_b: TaskNode { 
-    references: [Symbol "X"],  // Must resolve to existing symbol
-    depends_on: [task_a],       // Explicit edge establishes order
-    ... 
-}
-
-// Validation order:
-// 1. Topologically sort TaskNodes by dependency edges
-// 2. For each TaskNode in order:
-//    - Collect all symbols from dependencies
-//    - Validate this TaskNode's deltas against accumulated symbols
-//    - Add this TaskNode's produced symbols to accumulated set
-```
-
-**No global topological pass needed**—dependencies are explicit in the graph structure, and validation follows the graph topology naturally.
-
-#### 8.6 Cross-Boundary References (Resolved)
-
-**Question**: How are external references (npm crates, system libraries) handled? They don't exist in the Artifact graph.
-
-**Resolution**: **External symbols are first-class Artifacts via "System" crate.**
+**Resolution**: **Hash binding in Merkle DAG makes this automatic.**
 
 ```rust
-// External dependencies are represented as read-only Artifacts:
-SymbolRef { 
-    crate: "system:std",        // "system:" prefix denotes external
-    module: "collections", 
-    symbol: "HashMap" 
-}
-
+// SymbolRef includes parent's content hash:
 SymbolRef {
-    crate: "system:npm:lodash",  // External npm package
-    module: "index",
-    symbol: "debounce"
+    crate: "utils",
+    module: "helpers",
+    symbol: "formatDate",
+    parent_hash: "sha256:abc123...",  // Hash of parent artifact
 }
+
+// To create this SymbolRef, the hash must be known.
+// If B's hash isn't known, the SymbolRef cannot be constructed.
 ```
 
-**System Artifacts**:
-- Generated once at workspace initialization by scanning `Cargo.toml`, `package.json`, etc.
-- Read-only (no agent can propose deltas targeting them)
-- Full SymbolRef tree exposed (types, functions, constants)
-- Version-pinned (hash includes version constraint)
+**Construction-time invariant**: A delta cannot propose a SymbolRef with an unknown `parent_hash`. This is enforced by the **Merkle structure**, not by explicit dependency edges.
+
+The graph is **append-only and hash-linked**:
+- Every artifact's hash depends on its content (including SymbolRefs it contains)
+- Every SymbolRef embeds the parent's hash
+- Invalidation propagates forward through hash mismatch
+
+#### 8.6 Cross-Boundary References (External Artifacts)
+
+**Question**: How are external references (npm, std lib) handled?
+
+**Resolution**: **External Artifacts are graph roots with stable hashes.**
 
 ```rust
-// Graph construction includes System Artifacts as roots:
-ValidatedGraph {
-    roots: [
-        system_artifacts: ["system:std", "system:npm:lodash", ...],
-        workspace_artifacts: [...],
-    ],
-    tasks: [...],
+// External dependency as root Artifact:
+Artifact<ExternalModule> {
+    id: "system:std:collections:HashMap",
+    content_hash: "sha256:def456...",  // Computed from manifest lock
+    source: ExternalManifest,           // Cargo.lock, package-lock.json, etc.
+    symbol_tree: [...],                 // Exported symbols as tree
+}
+
+// SymbolRef to external:
+SymbolRef {
+    crate: "system:std",
+    module: "collections",
+    symbol: "HashMap",
+    parent_hash: "sha256:def456...",  // From lock file
 }
 ```
 
-This makes external references **resolvable at construction time** just like internal references—all SymbolRefs point to Artifacts in the graph, whether user-created or system-provided.
+External Artifacts are:
+- Generated from lock files (`Cargo.lock`, `package-lock.json`) at workspace init
+- Read-only roots in the graph
+- Version-pinned via hash (changing version = different hash = different graph)
 
 ### Semantic Coupling (Spec-Code-Test Chain)
 
