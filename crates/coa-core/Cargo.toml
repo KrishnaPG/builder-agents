@@ -1,14 +1,49 @@
 [package]
 name = "coa-core"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-rust-version.workspace = true
-description = "Core types and abstractions for COA"
+version = "0.1.0"
+edition = "2021"
+authors = ["COA Team"]
+description = "COA Core Orchestrator - Task decomposition and agent management"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
+# Core workspace members
+coa-artifact = { path = "../coa-artifact" }
+coa-symbol = { path = "../coa-symbol" }
+coa-composition = { path = "../coa-composition" }
+coa-constitutional = { path = "../coa-constitutional" }
 
-[lints]
-workspace = true
+# Async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+
+# Collections
+dashmap = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# IDs
+ulid = { workspace = true }
+uuid = { workspace = true }
+
+# Cryptography (tokens)
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# Tracing
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.12"
+tempfile = "3"
