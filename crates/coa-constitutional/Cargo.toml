@@ -1,14 +1,50 @@
 [package]
 name = "coa-constitutional"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-rust-version.workspace = true
-description = "Constitutional compliance and policy validation for COA"
+version = "0.1.0"
+edition = "2021"
+authors = ["COA Team"]
+description = "Constitutional Layer for COA - Parse/Apply/Serialize Artifacts"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
+# Core workspace members
+coa-artifact = { path = "../coa-artifact" }
+coa-symbol = { path = "../coa-symbol" }
+coa-composition = { path = "../coa-composition" }
 
-[lints]
-workspace = true
+# Async runtime
+tokio = { version = "1.35", features = ["fs", "io-util", "rt", "macros"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+
+# Parsing - use workspace versions
+tree-sitter = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-python = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+pulldown-cmark = { workspace = true }
+
+# Caching - high performance concurrent cache
+moka = { version = "0.12", features = ["future"] }
+
+# Hashing
+blake3 = "1.5"
+
+# Error handling
+thiserror = "1"
+
+# Tracing and observability
+tracing = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3"
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+# Benchmarks to be added later
+# [[bench]]
+# name = "cache_benchmark"
+# harness = false

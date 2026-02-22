@@ -14,6 +14,9 @@ use std::str::FromStr;
 pub struct ContentHash([u8; 32]);
 
 impl ContentHash {
+    /// Zero hash (all zeros)
+    pub const ZERO: Self = Self([0u8; 32]);
+
     /// Create a new ContentHash from raw bytes
     #[inline]
     #[must_use]
