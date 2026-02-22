@@ -1,10 +1,10 @@
 //! Stress Test - 10,000 nodes (v2.0)
 //! 
-//! Run with: cargo nextest run --package cog_kernel -- stress
-//! Or: cargo test --package cog_kernel --test stress_test
-
-use cog_kernel::prelude::*;
-use cog_kernel::DirectiveSet;
+//! Run with: cargo nextest run --package coa-kernel -- stress
+//! Or: cargo test --package coa-kernel --test stress_test
+//!
+use coa_kernel::prelude::*;
+use coa_kernel::DirectiveSet;
 use std::collections::BTreeMap;
 use std::time::Instant;
 use ed25519_dalek::SigningKey;

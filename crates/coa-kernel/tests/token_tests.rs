@@ -1,5 +1,5 @@
-use cog_kernel::autonomy::CapabilityToken;
-use cog_kernel::types::{AutonomyLevel, DirectiveProfileHash, NodeId, ResourceCaps};
+use coa_kernel::autonomy::CapabilityToken;
+use coa_kernel::types::{AutonomyLevel, DirectiveProfileHash, NodeId, ResourceCaps};
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use rand::rngs::OsRng;
 

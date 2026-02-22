@@ -1,5 +1,5 @@
-use cog_kernel::state_machine::{allowed_transitions, validate_transition};
-use cog_kernel::types::NodeState;
+use coa_kernel::state_machine::{allowed_transitions, validate_transition};
+use coa_kernel::types::NodeState;
 use proptest::prelude::*;
 
 #[test]

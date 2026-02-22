@@ -1,5 +1,5 @@
-use cog_kernel::dag::Dag;
-use cog_kernel::types::{GraphType, NodeId};
+use coa_kernel::dag::Dag;
+use coa_kernel::types::{GraphType, NodeId};
 use proptest::prelude::*;
 
 proptest! {

@@ -12,6 +12,7 @@ use crate::decomposition::TaskDecomposer;
 use crate::error::{COAError, ConstructionError, DecompositionError, Diagnostic, ErrorType, Goal, Location, SuggestedFix};
 use crate::types::{AgentSpec, ArtifactSummary, COAConfig, ExecutionResult, Specification, Task, TaskId, UserIntent};
 use coa_artifact::{Artifact, ArtifactType, StructuralDelta};
+use coa_constitutional::parsers::CodeArtifact;
 use coa_composition::CompositionStrategy;
 // Constitutional layer will be integrated when ready
 // use coa_constitutional::ConstitutionalLayer;
@@ -98,22 +99,24 @@ impl CreatorOrchestratorAgent {
         // 2. Parse response into Specification
         // 3. Validate the specification
 
+        let desc = intent.description.to_lowercase();
+
         // For now, create a simple specification based on keywords
-        let goal = if intent.description.contains("create")
-            || intent.description.contains("new")
-            || intent.description.contains("add")
+        let goal = if desc.contains("create")
+            || desc.contains("new")
+            || desc.contains("add")
         {
             Goal::CreateNew
-        } else if intent.description.contains("modify")
-            || intent.description.contains("update")
-            || intent.description.contains("change")
+        } else if desc.contains("modify")
+            || desc.contains("update")
+            || desc.contains("change")
         {
             Goal::ModifyExisting
-        } else if intent.description.contains("refactor") {
+        } else if desc.contains("refactor") {
             Goal::Refactor
-        } else if intent.description.contains("analyze") {
+        } else if desc.contains("analyze") {
             Goal::Analyze
-        } else if intent.description.contains("optimize") {
+        } else if desc.contains("optimize") {
             Goal::Optimize
         } else {
             Goal::CreateNew // Default
@@ -211,11 +214,11 @@ impl CreatorOrchestratorAgent {
     }
 
     /// Execute single task through agent
-    async fn execute_task<T: ArtifactType>(
+    async fn execute_task(
         &self,
         _agent: &AgentHandle,
         task: &Task,
-    ) -> Result<Artifact<T>, COAError> {
+    ) -> Result<Artifact<CodeArtifact>, COAError> {
         // In a real implementation, this would:
         // 1. Send task to agent via channel
         // 2. Wait for response

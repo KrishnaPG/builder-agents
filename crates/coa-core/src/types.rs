@@ -513,7 +513,7 @@ pub fn new_directive_set() -> DirectiveSet {
 /// Get string value from directive set
 #[inline]
 #[must_use]
-pub fn get_directive_string(directives: &DirectiveSet, key: &str) -> Option<&str> {
+pub fn get_directive_string<'a>(directives: &'a DirectiveSet, key: &str) -> Option<&'a str> {
     directives.get(key).and_then(|v| match v {
         DirectiveValue::String(s) => Some(s.as_str()),
         _ => None,

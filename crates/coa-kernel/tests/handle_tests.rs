@@ -1,9 +1,9 @@
 //! GraphBuilder Tests (v2.0)
 //!
 //! Tests for the construction phase using GraphBuilder.
-
-use cog_kernel::prelude::*;
-use cog_kernel::DirectiveSet;
+//!
+use coa_kernel::prelude::*;
+use coa_kernel::DirectiveSet;
 use std::collections::BTreeMap;
 use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;

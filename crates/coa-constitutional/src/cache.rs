@@ -7,6 +7,7 @@ use moka::future::Cache;
 use std::any::{Any, TypeId};
 use std::fmt::Debug;
 use std::future::Future;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -27,6 +28,7 @@ pub struct CacheStats {
 #[derive(Debug, Clone)]
 pub struct ArtifactCache {
     inner: Cache<ContentHash, Arc<dyn Any + Send + Sync>>,
+    entry_count: Arc<AtomicU64>,
 }
 
 impl ArtifactCache {
@@ -36,6 +38,7 @@ impl ArtifactCache {
     pub fn new(max_capacity: u64) -> Self {
         Self {
             inner: Cache::new(max_capacity),
+            entry_count: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -48,12 +51,16 @@ impl ArtifactCache {
                 .max_capacity(max_capacity)
                 .time_to_live(ttl)
                 .build(),
+            entry_count: Arc::new(AtomicU64::new(0)),
         }
     }
 
     /// Insert artifact into cache
     #[inline]
     pub async fn insert<T: ArtifactType>(&self, hash: ContentHash, artifact: Artifact<T>) {
+        if !self.contains(&hash).await {
+            self.entry_count.fetch_add(1, Ordering::Relaxed);
+        }
         self.inner.insert(hash, Arc::new(artifact)).await;
     }
 
@@ -120,12 +127,16 @@ impl ArtifactCache {
     /// Invalidate cache entry
     #[inline]
     pub async fn invalidate(&self, hash: &ContentHash) {
+        if self.contains(hash).await {
+            self.entry_count.fetch_sub(1, Ordering::Relaxed);
+        }
         self.inner.invalidate(hash).await;
     }
 
     /// Invalidate all entries
     #[inline]
     pub fn invalidate_all(&self) {
+        self.entry_count.store(0, Ordering::Relaxed);
         self.inner.invalidate_all();
     }
 
@@ -141,7 +152,7 @@ impl ArtifactCache {
     #[must_use]
     pub fn stats(&self) -> CacheStats {
         CacheStats {
-            entry_count: self.inner.entry_count(),
+            entry_count: self.entry_count.load(Ordering::Relaxed),
         }
     }
 
@@ -149,7 +160,7 @@ impl ArtifactCache {
     #[inline]
     #[must_use]
     pub fn entry_count(&self) -> u64 {
-        self.inner.entry_count()
+        self.entry_count.load(Ordering::Relaxed)
     }
 }
 
@@ -224,7 +235,7 @@ mod tests {
         let content = TestContent {
             data: "test content".to_string(),
         };
-        let artifact = Artifact::new(content).unwrap();
+        let artifact: Artifact<TestArtifact> = Artifact::new(content).unwrap();
         let hash = *artifact.hash();
 
         cache.insert(hash, artifact.clone()).await;
@@ -252,12 +263,12 @@ mod tests {
         let call_count_clone = call_count.clone();
 
         let artifact = cache
-            .get_or_insert_with(hash, || async {
+            .get_or_insert_with::<TestArtifact, _, _>(hash, || async {
                 call_count_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 let content = TestContent {
                     data: "computed".to_string(),
                 };
-                Artifact::new(content).unwrap()
+                Artifact::<TestArtifact>::new(content).unwrap()
             })
             .await;
 
@@ -265,8 +276,8 @@ mod tests {
         assert_eq!(call_count.load(std::sync::atomic::Ordering::SeqCst), 1);
 
         // Second call should use cache
-        let artifact2 = cache
-            .get_or_insert_with(hash, || async {
+        let artifact2: Artifact<TestArtifact> = cache
+            .get_or_insert_with::<TestArtifact, _, _>(hash, || async {
                 call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 unreachable!("should use cached value")
             })
@@ -282,7 +293,7 @@ mod tests {
         let content = TestContent {
             data: "test".to_string(),
         };
-        let artifact = Artifact::new(content).unwrap();
+        let artifact: Artifact<TestArtifact> = Artifact::new(content).unwrap();
         let hash = *artifact.hash();
 
         cache.insert(hash, artifact).await;
@@ -300,7 +311,7 @@ mod tests {
             let content = TestContent {
                 data: format!("content {}", i),
             };
-            let artifact = Artifact::new(content).unwrap();
+            let artifact: Artifact<TestArtifact> = Artifact::new(content).unwrap();
             cache.insert(*artifact.hash(), artifact).await;
         }
 
@@ -314,7 +325,7 @@ mod tests {
         let content = TestContent {
             data: "test".to_string(),
         };
-        let artifact = Artifact::new(content).unwrap();
+        let artifact: Artifact<TestArtifact> = Artifact::new(content).unwrap();
         let hash = *artifact.hash();
 
         cache.insert(hash, artifact).await;

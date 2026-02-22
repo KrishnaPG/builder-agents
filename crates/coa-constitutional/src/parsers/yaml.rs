@@ -190,7 +190,9 @@ impl ArtifactParser for YamlParser {
             documents.push(value);
         }
 
-        if documents.is_empty() {
+        if documents.is_empty()
+            || documents.iter().all(|doc| matches!(doc, Value::Null))
+        {
             return Err(ParseError::SyntaxError {
                 path: std::path::PathBuf::from("input.yaml"),
                 message: "empty YAML document".to_string(),

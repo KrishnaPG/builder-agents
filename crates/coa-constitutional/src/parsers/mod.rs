@@ -195,10 +195,13 @@ mod tests {
     fn parser_can_parse_by_extension() {
         let parser = TestParser;
 
-        assert!(parser.can_parse(Path::new("file.test")));
-        assert!(parser.can_parse(Path::new("/path/to/file.test")));
-        assert!(!parser.can_parse(Path::new("file.txt")));
-        assert!(!parser.can_parse(Path::new("file")));
+        assert!(ArtifactParser::can_parse(&parser, Path::new("file.test")));
+        assert!(ArtifactParser::can_parse(
+            &parser,
+            Path::new("/path/to/file.test")
+        ));
+        assert!(!ArtifactParser::can_parse(&parser, Path::new("file.txt")));
+        assert!(!ArtifactParser::can_parse(&parser, Path::new("file")));
     }
 
     #[test]

@@ -1,5 +1,5 @@
-use cog_kernel::logging::{Event, EventLog};
-use cog_kernel::types::{AutonomyLevel, DirectiveProfileHash, EventId, NodeId};
+use coa_kernel::logging::{Event, EventLog};
+use coa_kernel::types::{AutonomyLevel, DirectiveProfileHash, EventId, NodeId};
 
 #[test]
 fn test_log_integrity() {
