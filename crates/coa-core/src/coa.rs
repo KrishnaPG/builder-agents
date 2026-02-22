@@ -101,8 +101,14 @@ impl CreatorOrchestratorAgent {
 
         let desc = intent.description.to_lowercase();
 
+        let logging_like = desc.contains("logging") || desc.contains("log ");
+        let mentions_handlers = desc.contains("handler") || desc.contains("endpoint");
+        let mentions_all = desc.contains("all ");
+
         // For now, create a simple specification based on keywords
-        let goal = if desc.contains("create")
+        let goal = if logging_like && mentions_handlers && mentions_all {
+            Goal::ModifyExisting
+        } else if desc.contains("create")
             || desc.contains("new")
             || desc.contains("add")
         {
