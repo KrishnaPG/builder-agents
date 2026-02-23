@@ -10,12 +10,12 @@ For each micro task:
 4. Code generation
 5. Test execution
 6. Diff creation
-7. **Structural validation (construction-time)**
+7. Structural validation (construction-time)
 8. Merge decision (autonomy level encoded in node type)
 9. Deployment or sandbox run
 10. Knowledge graph update
 
-**All policy validation occurs at step 7 (construction time).**
+All policy validation occurs at step 7 (construction time).
 
 Steps 8-10 execute with zero runtime governance checks.
 
@@ -107,7 +107,7 @@ v1 release must include:
 * Escalation contracts (embedded, not runtime checks)
 * COA orchestration
 * Construction-time validation layer
-* **Typed dynamic expansion (staged construction)**
+* Typed dynamic expansion (staged construction)
 
 Partial implementations are prototypes.
 

@@ -74,11 +74,11 @@ The COA is programmable but constitutionally constrained.
 10. Only the COA may instantiate runtime agents.
 11. Runtime agents must be ephemeral and policy-bound.
 12. Constitutional invariants are immutable and cannot be modified by COA.
-13. **Graphs must be safe by construction; no runtime governance validation permitted.**
-14. **All policy enforcement occurs at graph construction time; execution follows proven-safe structure.**
-15. **Dynamic graph expansion requires staged construction: expansion output is typed as subgraph specification, validated before execution.**
-16. **Agents produce structural deltas, not text; artifacts are typed trees, not files.**
-17. **Output integrity and referential integrity are guaranteed by construction, not checked at runtime.**
+13. Graphs must be safe by construction; no runtime governance validation permitted.
+14. All policy enforcement occurs at graph construction time; execution follows proven-safe structure.
+15. Dynamic graph expansion requires staged construction: expansion output is typed as subgraph specification, validated before execution.
+16. Agents produce structural deltas, not text; artifacts are typed trees, not files.
+17. Output integrity and referential integrity are guaranteed by construction, not checked at runtime.
 
 If any feature violates these, it is invalid.
 
@@ -96,12 +96,12 @@ See [04-agent-model.md](./04-agent-model.md#51-no-direct-io-model) for the compl
 
 The system operates on **Artifacts** - structured, typed representations:
 
-| External Form | Internal Artifact | Type |
-|--------------|-------------------|------|
-| Code files (`.ts`, `.rs`, `.py`) | AST + Symbol table + Module graph | `Artifact<Code>` |
-| Config files (`.yaml`, `.json`) | Schema-validated tree | `Artifact<Config>` |
-| Spec documents (`.md`) | Structured document model | `Artifact<Spec>` |
-| Binary assets | Content hash + Metadata | `Artifact<Binary>` |
+| External Form                    | Internal Artifact                 | Type               |
+| -------------------------------- | --------------------------------- | ------------------ |
+| Code files (`.ts`, `.rs`, `.py`) | AST + Symbol table + Module graph | `Artifact<Code>`   |
+| Config files (`.yaml`, `.json`)  | Schema-validated tree             | `Artifact<Config>` |
+| Spec documents (`.md`)           | Structured document model         | `Artifact<Spec>`   |
+| Binary assets                    | Content hash + Metadata           | `Artifact<Binary>` |
 
 **Agents do not write files. They compute StructuralDelta<T>.**
 
@@ -164,14 +164,14 @@ When Spec changes:
 
 # Document Index
 
-| Document | Contents |
-|----------|----------|
-| [01-intro.md](./01-intro.md) | System Identity, Core Principles, Artifact System (this file) |
-| [02-architecture.md](./02-architecture.md) | System Layers, Execution Engine, Cognitive Orchestration, Dynamic Graph Expansion |
-| [03-security.md](./03-security.md) | Security Pipeline (Mandatory Stages) |
-| [04-agent-model.md](./04-agent-model.md) | System Primitives, Artifact Model, Agent Model, Modes, Output/Referential Integrity |
-| [05-operations.md](./05-operations.md) | State Flow, Failure/Recovery, Knowledge Graph, Metrics, Minimum Requirements |
-| [06-composition-strategies.md](./06-composition-strategies.md) | Conflict Resolution Strategies for Multi-Agent Composition |
+| Document                                                       | Contents                                                                            |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [01-intro.md](./01-intro.md)                                   | System Identity, Core Principles, Artifact System (this file)                       |
+| [02-architecture.md](./02-architecture.md)                     | System Layers, Execution Engine, Cognitive Orchestration, Dynamic Graph Expansion   |
+| [03-security.md](./03-security.md)                             | Security Pipeline (Mandatory Stages)                                                |
+| [04-agent-model.md](./04-agent-model.md)                       | System Primitives, Artifact Model, Agent Model, Modes, Output/Referential Integrity |
+| [05-operations.md](./05-operations.md)                         | State Flow, Failure/Recovery, Knowledge Graph, Metrics, Minimum Requirements        |
+| [06-composition-strategies.md](./06-composition-strategies.md) | Conflict Resolution Strategies for Multi-Agent Composition                          |
 
 ---
 
@@ -187,8 +187,8 @@ When implemented correctly, the system is:
 * Safe by construction
 * Orchestrator driven
 * Constitutionally constrained
-* **Capable of dynamic expansion without runtime governance**
-* **Structurally immune to output conflicts and reference drift**
+* Capable of dynamic expansion without runtime governance
+* Structurally immune to output conflicts and reference drift
 
 This document set defines the build boundary.
 
