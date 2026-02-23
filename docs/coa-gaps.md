@@ -7,6 +7,24 @@ Below is a section‑by‑section compliance review.
 
 ---
 
+**Implementation Checklist (Ordered by Invariant Unblocking)**
+
+- **Implement ConstitutionalLayer ingress parsing (No Direct IO + Typed Artifacts):** Wire `parse_ingress` to `ParserRegistry` and type-erased parser dispatch so files become `Artifact<T>` instead of returning a parser error. See [layer.rs](../crates/coa-constitutional/src/layer.rs#L75-L145) and [parsers/mod.rs](../crates/coa-constitutional/src/parsers/mod.rs#L22-L154).
+- **Implement artifact transformers + apply_delta (StructuralDelta<T> application):** Add transformer registry and real delta application so StructuralDelta is executable (no placeholder errors). See [layer.rs](../crates/coa-constitutional/src/layer.rs#L147-L173) and [delta.rs](../crates/coa-artifact/src/delta.rs#L11-L172).
+- **Implement composition compose for all strategies (Output Integrity by construction):** Replace placeholder errors in SingleWriter/Ordered/Hybrid with real composition using ConstitutionalLayer transforms. See [single_writer.rs](../crates/coa-composition/src/single_writer.rs#L71-L109), [ordered.rs](../crates/coa-composition/src/ordered.rs#L95-L108), and [hybrid.rs](../crates/coa-composition/src/hybrid.rs#L211-L232).
+- **Wire COA execution pipeline end-to-end (Agents produce deltas; ConstitutionalLayer applies):** Connect agent task execution to produce `StructuralDelta<T>`, validate via `CompositionStrategy`, and apply via ConstitutionalLayer. The current COA path is stubbed at execution. See [coa.rs](../crates/coa-core/src/coa.rs#L222-L239).
+- **Implement serializer egress (Artifact → file):** Add serializer registry and actual serialization to complete ingress/transform/egress loop. See [layer.rs](../crates/coa-constitutional/src/layer.rs#L211-L229).
+- **Implement security pipeline completeness validation (Mandatory stages):** Replace placeholder `has_security_pipeline` with directive/graph checks enforcing required stages (static scan, dependency scan, secrets detection, API validation) at construction time. See [validator.rs](../crates/coa-kernel/src/construction/validator.rs#L185-L211).
+- **Implement dynamic expansion merge + re-validation (Typed Dynamic Expansion):** Merge validated subgraph into the running validated graph and track expanded nodes; complete `provide_expansion` and `complete_expansion`. See [expansion/mod.rs](../crates/coa-kernel/src/expansion/mod.rs#L127-L215).
+- **Ensure symbol index is populated from parsed artifacts (Referential Integrity):** Populate `SymbolRefIndex` from `Artifact<Code/Spec>` so SymbolRef resolution and overlap detection are meaningful beyond empty-index checks. See [index.rs](../crates/coa-symbol/src/index.rs#L101-L175).
+- **Enforce output integrity at construction via actual SymbolRef claims:** Integrate symbol claims from agent deltas with `SymbolRefIndex` at GraphBuilder/ConstructionValidator time, not just at composition time. See [validation.rs](../crates/coa-symbol/src/validation.rs#L25-L99).
+- **Integrate runtime execution with real node work (Execution invariants on concrete tasks):** Replace DefaultNodeExecutor stub with real task execution, wired to COA task graph, while preserving zero runtime policy validation. See [executor/mod.rs](../crates/coa-kernel/src/executor/mod.rs#L180-L203).
+- **Add knowledge-graph governance types and states (Operations spec):** Implement Draft/Verified/Deprecated states, provenance, and audit metadata required by the operations blueprint. No current implementation found in `/crates`.
+- **Add metrics collection and immutability (Operations spec):** Track metrics listed in the blueprint (deployment time, autonomy intervention, context leakage, etc.) and persist them immutably. No current implementation found in `/crates`.
+- **Add mode directive bundles (Sketchpad/Factory/Multiverse/Renovator):** Implement mode configurations and graph-rebuild enforcement when modes change. No current implementation found in `/crates`.
+
+---
+
 **1. Artifact System & No Direct IO**
 
 Blueprint (01‑intro.md + 04‑agent-model.md):
