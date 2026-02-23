@@ -55,9 +55,9 @@ This layer validates graphs **before** they become executable. It does not exist
 * Security pipeline completeness (mandatory stages, not optional checks)
 * Autonomy ceiling compliance (encoded in node type, not checked at runtime)
 * Agent contract schema validation
-* **Artifact type compatibility (delta can apply to target artifact)**
-* **Referential integrity (all symbolic references resolve)**
-* **Output integrity (no conflicting writers to same artifact)**
+* Artifact type compatibility (delta can apply to target artifact)
+* Referential integrity (all symbolic references resolve)
+* Output integrity (no conflicting writers to same artifact)
 
 **Once validation passes, the graph is frozen. Execution proceeds with zero policy checks.**
 
@@ -116,10 +116,10 @@ The COA is the only persistent cognitive authority.
 * Generate or select runtime agent templates
 * Compose directive bundles dynamically
 * Allocate autonomy levels per node (statically encoded)
-* **Construct graphs via GraphBuilder that pass validation**
-* **Provide subgraph specifications for dynamic expansion**
-* **Parse external files into TypedTree Artifacts (ingress)**
-* **Apply StructuralDeltas via Constitutional Layer (egress)**
+* Construct graphs via GraphBuilder that pass validation
+* Provide subgraph specifications for dynamic expansion
+* Parse external files into TypedTree Artifacts (ingress)
+* Apply StructuralDeltas via Constitutional Layer (egress)
 * Escalate to human when required (via embedded escalation contracts)
 * Dissolve runtime agents after task completion
 * Update knowledge graph within policy boundaries
@@ -150,9 +150,9 @@ Each micro task contains:
 * Input specification (Artifact<Spec>)
 * Acceptance criteria (linked to spec artifacts)
 * Neighbor interface constraints (symbolic references)
-* **Autonomy ceiling (encoded in task type)**
-* **Resource bound declaration (part of task type)**
-* **Output artifact type (enforced at construction)**
+* Autonomy ceiling (encoded in task type)
+* Resource bound declaration (part of task type)
+* Output artifact type (enforced at construction)
 
 Every task must:
 
@@ -167,8 +167,8 @@ Every task must:
 Every micro task executes inside an isolated execution container.
 
 * Container memory boundaries enforced by container primitives (not runtime checks)
-* **No filesystem access (enforced by container absence of FS)**
-* **No network access (enforced unless explicitly declared)**
+* No filesystem access (enforced by container absence of FS)
+* No network access (enforced unless explicitly declared)
 * No hidden shared memory between nodes (enforced by graph topology)
 * Agents may access only:
 
@@ -200,11 +200,11 @@ The UX displays software as a directed network graph.
 
 Nodes:
 
-* Module (Artifact<Code>)
+* Module (Artifact< Code >)
 * Task container (Agent execution node)
 * Agent group
-* **Artifact<T> (typed artifact node)**
-* **Expansion stub (declares dynamic expansion capability)**
+* Artifact<T> (typed artifact node)
+* Expansion stub (declares dynamic expansion capability)
 
 Edges:
 
@@ -212,8 +212,8 @@ Edges:
 * Derivation (Artifact B derived from Artifact A)
 * API flow
 * Data flow
-* **Symbolic reference (Ref from A to symbol in B)**
-* **Expansion dependency (parent-child relationship)**
+* Symbolic reference (Ref from A to symbol in B)
+* Expansion dependency (parent-child relationship)
 
 Node states:
 
@@ -231,7 +231,7 @@ Graph Consistency Contract (enforced by construction primitives):
 * Edge modification requires graph reconstruction and revalidation
 * Node deletion prohibited (nodes may be marked deprecated)
 * Node deactivation preserves historical trace
-* **Single-writer per Artifact (enforced at edge insertion)**
+* Single-writer per Artifact (enforced at edge insertion)
 
 ---
 
@@ -371,7 +371,7 @@ Directives modify:
 * Agent debate length
 * Security scan depth (pipeline stage configuration)
 * Documentation requirements
-* **Artifact validation strictness (schema-only vs full semantic)**
+* Artifact validation strictness (schema-only vs full semantic)
 
 ---
 
@@ -444,7 +444,7 @@ Supports:
 * Visual replay
 * Autonomy inspection
 * Directive comparison
-* **Structural delta replay (watch AST transform)**
+* Structural delta replay (watch AST transform)
 * Code diff comparison
 
 Scrubbing does not mutate history.
