@@ -1,0 +1,24 @@
+[package]
+name = "coa-opencode"
+version = "0.1.0"
+edition = "2021"
+authors = ["COA Team"]
+description = "Switchable Opencode backend for COA agent orchestration"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+
+# HTTP client/server
+reqwest = { version = "0.12", features = ["json"] }
+warp = "0.3"
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+tempfile = "3"

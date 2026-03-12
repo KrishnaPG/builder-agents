@@ -37,7 +37,7 @@ It combines:
 * Adjustable autonomy
 * Full temporal traceability
 * Safe-by-construction graph assembly
-* **Structural artifact model (not text/files)**
+* Structural artifact model (not text/files)
 * Research sandbox capability
 * Policy-bound runtime agent generation
 
