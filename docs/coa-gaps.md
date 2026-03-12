@@ -334,5 +334,12 @@ To make the `/crates` implementation fully compliant with the Blueprint:
   - Implement publication-specific composition strategies for combining research findings.
   - Add reproducibility tracking (experiment specification artifacts, result versioning, parameter sweeps).
 
+- **coa-opencode Thin Wrapper Improvements (Completed)**
+  - Removed hardcoded model/agent/skill lists from CLI mode
+  - Eliminated agent/skill caching that duplicated opencode functionality
+  - Made all operations proxy directly to opencode CLI/daemon
+  - Removed reload() implementation (handled by opencode itself)
+  - Now truly thin wrapper exposing all opencode API dynamically
+
 ---
 

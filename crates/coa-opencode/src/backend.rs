@@ -25,8 +25,6 @@ pub enum OpencodeBackendMode {
 #[derive(Debug, Clone)]
 pub struct OpencodeBackend {
     mode: OpencodeBackendMode,
-    agent_cache: Option<HashMap<String, AgentInfo>>,
-    skill_cache: Option<Vec<SkillInfo>>,
 }
 
 impl Default for OpencodeBackend {
@@ -45,8 +43,6 @@ impl Default for OpencodeBackend {
                         opencode_bin: bin,
                         working_dir: work_dir,
                     },
-                    agent_cache: None,
-                    skill_cache: None,
                 }
             }
             _ => {
@@ -57,8 +53,6 @@ impl Default for OpencodeBackend {
                         client: Client::new(),
                         base_url: addr.trim_end_matches('/').to_string(),
                     },
-                    agent_cache: None,
-                    skill_cache: None,
                 }
             }
         }
@@ -69,77 +63,11 @@ impl OpencodeBackend {
     pub fn new(mode: OpencodeBackendMode) -> Self {
         Self {
             mode,
-            agent_cache: None,
-            skill_cache: None,
         }
     }
 
     pub fn from_env() -> Self {
         Self::default()
-    }
-
-    fn load_agent_definitions(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if let OpencodeBackendMode::Cli { ref working_dir, .. } = self.mode {
-            let base = working_dir.as_ref().map(|p| p.as_path()).unwrap_or_else(|| Path::new(".opencode"));
-            let agent_dir = base.join("agent");
-            let mut agents = HashMap::new();
-            if agent_dir.is_dir() {
-                for entry in fs::read_dir(agent_dir)? {
-                    let entry = entry?;
-                    let path = entry.path();
-                    if path.extension().and_then(|s| s.to_str()) == Some("md") {
-                        let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
-                        agents.insert(
-                            id.clone(),
-                            AgentInfo {
-                                id: id.clone(),
-                                name: id.replace('_', " ").title_case(),
-                                description: Some(format!("Agent loaded from {}", path.display())),
-                                model: "openai:gpt-4o".into(),
-                                provider: "openai".into(),
-                                temperature: Some(0.2),
-                                top_p: None,
-                                max_tokens: Some(4096),
-                                system_prompt: None,
-                                permission_ruleset: None,
-                                skill_ids: vec![],
-                                options: HashMap::new(),
-                            },
-                        );
-                    }
-                }
-            }
-            self.agent_cache = Some(agents);
-        }
-        Ok(())
-    }
-
-    fn load_skill_definitions(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if let OpencodeBackendMode::Cli { ref working_dir, .. } = self.mode {
-            let base = working_dir.as_ref().map(|p| p.as_path()).unwrap_or_else(|| Path::new(".opencode"));
-            let skill_dir = base.join("skill");
-            let mut skills = Vec::new();
-            if skill_dir.is_dir() {
-                for entry in fs::read_dir(skill_dir)? {
-                    let entry = entry?;
-                    let path = entry.path();
-                    if path.extension().and_then(|s| s.to_str()) == Some("ts")
-                        || path.extension().and_then(|s| s.to_str()) == Some("js")
-                    {
-                        let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
-                        skills.push(SkillInfo {
-                            id: id.clone(),
-                            name: id.replace('_', " ").title_case(),
-                            description: Some(format!("Skill loaded from {}", path.display())),
-                            entrypoint: None,
-                            options: HashMap::new(),
-                        });
-                    }
-                }
-            }
-            self.skill_cache = Some(skills);
-        }
-        Ok(())
     }
 }
 
@@ -147,9 +75,26 @@ impl OpencodeBackend {
 impl AgentService for OpencodeBackend {
     async fn list_agents(&self) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                let cache = self.agent_cache.as_ref().ok_or("Agent cache not loaded (call reload first)")?;
-                Ok(cache.keys().cloned().collect())
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("agent")
+                    .arg("list");
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode agent list failed: {}", err).into());
+                }
+
+                let ids: Vec<String> = serde_json::from_slice(&output.stdout)?;
+                Ok(ids)
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client.get(&format!("{}/agents", base_url)).send().await?;
@@ -164,11 +109,27 @@ impl AgentService for OpencodeBackend {
 
     async fn get_agent_info(&self, agent_id: &str) -> Result<AgentInfo, Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                let cache = self.agent_cache.as_ref().ok_or("Agent cache not loaded (call reload first)")?;
-                cache.get(agent_id)
-                    .cloned()
-                    .ok_or_else(|| format!("Unknown agent: {}", agent_id).into())
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("agent")
+                    .arg("info")
+                    .arg(agent_id);
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode agent info failed: {}", err).into());
+                }
+
+                let info: AgentInfo = serde_json::from_slice(&output.stdout)?;
+                Ok(info)
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client
@@ -186,8 +147,25 @@ impl AgentService for OpencodeBackend {
 
     async fn update_agent_config(&self, agent_id: &str, patch: AgentInfo) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                Err("runtime agent config update not implemented in CLI mode".into())
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("agent")
+                    .arg("update")
+                    .arg(agent_id);
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode agent update failed: {}", err).into());
+                }
+                Ok(())
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client
@@ -205,9 +183,26 @@ impl AgentService for OpencodeBackend {
 
     async fn list_skills(&self) -> Result<Vec<SkillInfo>, Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                let cache = self.skill_cache.as_ref().ok_or("Skill cache not loaded (call reload first)")?;
-                Ok(cache.clone())
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("skill")
+                    .arg("list");
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode skill list failed: {}", err).into());
+                }
+
+                let skills: Vec<SkillInfo> = serde_json::from_slice(&output.stdout)?;
+                Ok(skills)
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client.get(&format!("{}/skills", base_url)).send().await?;
@@ -222,24 +217,26 @@ impl AgentService for OpencodeBackend {
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>, Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                Ok(vec![
-                    ModelInfo {
-                        provider: "openai".into(),
-                        model: "gpt-4o".into(),
-                        display_name: Some("GPT-4o".into()),
-                    },
-                    ModelInfo {
-                        provider: "anthropic".into(),
-                        model: "claude-3-5-sonnet-20240620".into(),
-                        display_name: Some("Claude 3.5 Sonnet".into()),
-                    },
-                    ModelInfo {
-                        provider: "ollama".into(),
-                        model: "llama3:8b".into(),
-                        display_name: Some("Llama 3 8B".into()),
-                    },
-                ])
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("model")
+                    .arg("list");
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode model list failed: {}", err).into());
+                }
+
+                let models: Vec<ModelInfo> = serde_json::from_slice(&output.stdout)?;
+                Ok(models)
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client.get(&format!("{}/models", base_url)).send().await?;
@@ -285,7 +282,7 @@ impl AgentService for OpencodeBackend {
 
                 if !output.status.success() {
                     let err = String::from_utf8_lossy(&output.stderr);
-                    return Err(format!("opencode agent failed: {}", err).into());
+                    return Err(format!("opencode agent run failed: {}", err).into());
                 }
 
                 let result: AgentRunOutput = serde_json::from_slice(&output.stdout)?;
@@ -308,8 +305,27 @@ impl AgentService for OpencodeBackend {
 
     async fn execute_skill(&self, skill_id: &str, input: serde_json::Value) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         match &self.mode {
-            OpencodeBackendMode::Cli { .. } => {
-                Err("direct skill execution not implemented in CLI mode".into())
+            OpencodeBackendMode::Cli { ref opencode_bin, ref working_dir } => {
+                let mut cmd = Command::new(opencode_bin);
+                cmd.arg("skill")
+                    .arg("execute")
+                    .arg(skill_id);
+                if let Some(ref dir) = working_dir {
+                    cmd.current_dir(dir);
+                }
+                let output = cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await?;
+
+                if !output.status.success() {
+                    let err = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("opencode skill execute failed: {}", err).into());
+                }
+
+                let result: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+                Ok(result)
             }
             OpencodeBackendMode::Daemon { client, base_url } => {
                 let resp = client
@@ -327,11 +343,8 @@ impl AgentService for OpencodeBackend {
     }
 
     async fn reload(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let mut mutable = self.clone();
-        if let OpencodeBackendMode::Cli { .. } = mutable.mode {
-            mutable.load_agent_definitions()?;
-            mutable.load_skill_definitions()?;
-        }
+        // Reload is handled by the opencode CLI itself when needed
+        // For daemon mode, the server handles its own reload
         Ok(())
     }
 }
