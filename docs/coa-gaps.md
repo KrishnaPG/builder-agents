@@ -326,5 +326,13 @@ To make the `/crates` implementation fully compliant with the Blueprint:
   - Implement metrics collection and reporting.
   - Add knowledge graph types and states, if they are expected to live in backend crates.
 
+- **Research Publication Platform Specific Gaps**
+  - Implement knowledge graph data structures for papers, authors, citations, concepts (Draft/Verified/Deprecated states).
+  - Add academic document parsers (LaTeX, PDF, BibTeX, CSL) to ConstitutionalLayer.
+  - Create research workflow agents (literature review, experiment design, analysis, figure/table generation).
+  - Integrate scholarly infrastructure (arXiv, PubMed, Semantic Scholar APIs, reference managers).
+  - Implement publication-specific composition strategies for combining research findings.
+  - Add reproducibility tracking (experiment specification artifacts, result versioning, parameter sweeps).
+
 ---
 

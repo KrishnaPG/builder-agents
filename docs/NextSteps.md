@@ -8,32 +8,38 @@
 
 3. **Build Core Execution Backbone**
 
-   * COA orchestration engine
-   * Micro-task isolation containers
-   * TDD pipeline with governance validation
+    * COA orchestration engine
+    * Micro-task isolation containers
+    * TDD pipeline with governance validation
 
 4. **Ship Observable Control Surface**
 
-   * Neural Graph (live DAG)
-   * Autonomy dial
-   * Escalation signaling
+    * Neural Graph (live DAG)
+    * Autonomy dial
+    * Escalation signaling
 
 5. **Add Time + Logging Fabric**
 
-   * Append-only event log
-   * Time scrubber with replay
+    * Append-only event log
+    * Time scrubber with replay
 
 6. **Integrate Directive System**
 
-   * Directive precedence engine
-   * Mode bundles
-   * Autonomy enforcement hooks
+    * Directive precedence engine
+    * Mode bundles
+    * Autonomy enforcement hooks
 
 7. **Harden Governance & Resource Controls**
 
-   * Security gates
-   * Budget caps
-   * Deadlock detection
+    * Security gates
+    * Budget caps
+    * Deadlock detection
 
 8. **Release v1 with Minimum Requirements Only**
-   Everything else remains sandboxed until deterministic stability is proven.
+    Everything else remains sandboxed until deterministic stability is proven.
+
+9. **Research Publication Platform Extension** (Post-v1)
+    * Knowledge graph for papers, authors, citations
+    * Academic document parsers (LaTeX, PDF, BibTeX)
+    * Research workflow agents (literature review, experiment design)
+    * Scholarly infrastructure integrations (arXiv, PubMed, etc.)
